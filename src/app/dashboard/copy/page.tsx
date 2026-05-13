@@ -1,33 +1,69 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LayoutDashboard, Users, TrendingUp, Banknote, BookOpen, Settings } from 'lucide-react'
+import type { Gig, Trade } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
 
-const traders = [
-  { init:'YA', name:'Youssef Amrani', roi:'+34.2%', win:82, followers:'14.2k', status:'active' },
-  { init:'SC', name:'Salma Chraibi',  roi:'+21.7%', win:76, followers:'9.6k',  status:'active' },
-]
-
-const recentTrades = [
-  { pair:'XAUUSD', dir:'BUY',  pips:'+38', time:'09:24', profit:'+$240' },
-  { pair:'EURUSD', dir:'SELL', pips:'-12', time:'11:05', profit:'-$74' },
-  { pair:'US30',   dir:'BUY',  pips:'+95', time:'14:37', profit:'+$601' },
-  { pair:'XAUUSD', dir:'SELL', pips:'+22', time:'16:12', profit:'+$138' },
-]
-
 const navItems = [
-  { icon: LayoutDashboard, label:'Dashboard',  href:'/dashboard/copy', active:true },
-  { icon: Users,           label:'My Traders', href:'/marketplace' },
-  { icon: TrendingUp,      label:'My Trades',  href:'/dashboard/copy' },
-  { icon: Banknote,        label:'Rebates',    href:'/dashboard/copy' },
-  { icon: BookOpen,        label:'Courses',    href:'/dashboard/copy' },
-  { icon: Settings,        label:'Settings',   href:'/dashboard/copy' },
+  { icon: LayoutDashboard, label: 'Dashboard',  href: '/dashboard/copy', active: true },
+  { icon: Users,           label: 'My Traders', href: '/marketplace' },
+  { icon: TrendingUp,      label: 'My Trades',  href: '/dashboard/copy' },
+  { icon: Banknote,        label: 'Rebates',    href: '/dashboard/copy' },
+  { icon: BookOpen,        label: 'Courses',    href: '/dashboard/copy' },
+  { icon: Settings,        label: 'Settings',   href: '/dashboard/copy' },
 ]
 
 export default function CopyDashboard() {
+  const [followedGigs, setFollowedGigs] = useState<Gig[]>([])
+  const [trades, setTrades] = useState<Trade[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { window.location.href = '/login'; return }
+
+      // Get followed masters
+      const { data: follows } = await supabase
+        .from('follows')
+        .select('master_id')
+        .eq('trader_id', user.id)
+
+      const masterIds = (follows ?? []).map(f => f.master_id)
+
+      if (masterIds.length > 0) {
+        const [gigsRes, tradesRes] = await Promise.all([
+          supabase.from('gigs').select('*, profiles(*)').in('master_id', masterIds),
+          supabase.from('trades').select('*').in('master_id', masterIds).order('opened_at', { ascending: false }).limit(20),
+        ])
+        setFollowedGigs((gigsRes.data ?? []) as Gig[])
+        setTrades(tradesRes.data ?? [])
+      }
+
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const totalPips = trades.reduce((s, t) => s + (t.pnl_pips ?? 0), 0)
+  const closed = trades.filter(t => t.result !== 'OPEN')
+  const wins = closed.filter(t => t.result === 'WIN').length
+  const winRate = closed.length ? Math.round(wins / closed.length * 100) : 0
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center tf-page">
+        <div className="text-sm font-mono" style={{ color: 'var(--tf-subtle)' }}>Loading…</div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex tf-page" style={{ fontFamily: SYS }}>
       {/* Sidebar */}
@@ -41,8 +77,7 @@ export default function CopyDashboard() {
           {navItems.map(({ icon: Icon, label, href, active }) => (
             <Link key={label} href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
               style={{ background: active ? 'rgba(201,168,76,.12)' : 'transparent', color: active ? '#C9A84C' : 'var(--tf-muted)', border: active ? '1px solid rgba(201,168,76,.2)' : '1px solid transparent' }}>
-              <Icon size={16} strokeWidth={1.7} />
-              <span>{label}</span>
+              <Icon size={16} strokeWidth={1.7} /><span>{label}</span>
             </Link>
           ))}
         </nav>
@@ -60,21 +95,19 @@ export default function CopyDashboard() {
             <div>
               <h1 style={{ fontFamily: SYS, fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }}>My Dashboard</h1>
               <div className="flex items-center gap-1.5 mt-1 text-xs" style={{ color: 'var(--tf-subtle)' }}>
-                <span className="live-dot"></span> Copy Trading Active
+                <span className="live-dot"></span> {followedGigs.length > 0 ? 'Copy Trading Active' : 'No traders followed yet'}
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Link href="/marketplace" className="btn-outline rounded-full px-4 py-2 text-sm">Browse Traders</Link>
-            </div>
+            <Link href="/marketplace" className="btn-outline rounded-full px-4 py-2 text-sm">Browse Traders</Link>
           </div>
 
           {/* KPI cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label:'Total P/L',     value:'+$1,284',     color:'#4ADE80',        sub:'This month' },
-              { label:'Copied Trades', value:'47',         color:'var(--tf-text)', sub:'This month' },
-              { label:'Win Rate',      value:'71%',        color:'#C9A84C',        sub:'All traders' },
-              { label:'Rebates',       value:'$38',         color:'#E8C97A',        sub:'This week' },
+              { label: 'Total Pips',     value: totalPips > 0 ? `+${totalPips}` : totalPips.toString(), color: totalPips >= 0 ? '#4ADE80' : '#F87171', sub: 'All time' },
+              { label: 'Copied Trades',  value: trades.length.toString(), color: 'var(--tf-text)', sub: 'All traders' },
+              { label: 'Win Rate',       value: closed.length ? `${winRate}%` : '—', color: '#C9A84C', sub: `${closed.length} closed` },
+              { label: 'Masters Copied', value: followedGigs.length.toString(), color: '#E8C97A', sub: 'Active' },
             ].map(({ label, value, color, sub }) => (
               <div key={label} className="rounded-2xl p-5 tf-card-bg">
                 <div className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--tf-subtle)', letterSpacing: '0.08em' }}>{label}</div>
@@ -91,43 +124,60 @@ export default function CopyDashboard() {
                 <h2 className="text-base font-semibold" style={{ fontFamily: SYS, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>My Traders</h2>
                 <Link href="/marketplace" className="text-xs" style={{ color: '#C9A84C' }}>+ Add more</Link>
               </div>
-              <div className="space-y-4">
-                {traders.map(({ init, name, roi, win, status }) => (
-                  <div key={name} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
-                    <div className="w-10 h-10 rounded-full grid place-items-center font-bold shrink-0" style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: SYS }}>{init}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate" style={{ color: 'var(--tf-text)' }}>{name}</div>
-                      <div className="text-xs mt-0.5" style={{ color: 'var(--tf-subtle)' }}>Win: {win}%</div>
-                    </div>
-                    <div className="text-right">
-                      <div style={{ color: '#4ADE80', fontFamily: SYS, fontWeight: 600 }}>{roi}</div>
-                      <div className="flex items-center gap-1 text-xs mt-0.5" style={{ color: '#4ADE80' }}>
-                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#22C55E' }}></span> {status}
+              {followedGigs.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm mb-4" style={{ color: 'var(--tf-subtle)' }}>You&apos;re not following any traders yet.</p>
+                  <Link href="/marketplace" className="btn-gold rounded-full px-5 py-2 text-sm font-semibold">Browse Marketplace</Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {followedGigs.map(gig => {
+                    const p = gig.profiles
+                    const init = p?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?'
+                    return (
+                      <div key={gig.id} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
+                        <div className="w-10 h-10 rounded-full grid place-items-center font-bold shrink-0" style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: SYS }}>{init}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate" style={{ color: 'var(--tf-text)' }}>{p?.full_name ?? '—'}</div>
+                          <div className="text-xs mt-0.5" style={{ color: 'var(--tf-subtle)' }}>{gig.style ?? 'Trader'} · {gig.performance_fee}% fee</div>
+                        </div>
+                        <div className="text-right">
+                          <div style={{ color: '#4ADE80', fontFamily: SYS, fontWeight: 600 }}>{gig.roi_30d ? `+${gig.roi_30d}%` : '—'}</div>
+                          <div className="flex items-center gap-1 text-xs mt-0.5" style={{ color: '#4ADE80' }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#22C55E' }}></span> active
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Recent Trades */}
             <div className="rounded-2xl p-6 tf-card-bg">
               <h2 className="mb-5 text-base font-semibold" style={{ fontFamily: SYS, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Recent Copied Trades</h2>
-              <div className="space-y-3">
-                {recentTrades.map(({ pair, dir, pips, time, profit }, i) => (
-                  <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: i < recentTrades.length - 1 ? '1px solid var(--tf-border)' : 'none' }}>
-                    <div className="w-8 h-8 rounded-lg grid place-items-center text-xs font-bold"
-                      style={{ background: dir === 'BUY' ? 'rgba(34,197,94,.12)' : 'rgba(248,113,113,.12)', color: dir === 'BUY' ? '#4ADE80' : '#F87171' }}>
-                      {dir === 'BUY' ? '↑' : '↓'}
+              {trades.length === 0 ? (
+                <div className="py-8 text-center text-sm" style={{ color: 'var(--tf-subtle)' }}>No trades copied yet.</div>
+              ) : (
+                <div className="space-y-3">
+                  {trades.slice(0, 6).map((t, i) => (
+                    <div key={t.id} className="flex items-center gap-3 py-2" style={{ borderBottom: i < 5 ? '1px solid var(--tf-border)' : 'none' }}>
+                      <div className="w-8 h-8 rounded-lg grid place-items-center text-xs font-bold"
+                        style={{ background: t.direction === 'BUY' ? 'rgba(34,197,94,.12)' : 'rgba(248,113,113,.12)', color: t.direction === 'BUY' ? '#4ADE80' : '#F87171' }}>
+                        {t.direction === 'BUY' ? '↑' : '↓'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium" style={{ color: 'var(--tf-text)', fontFamily: SYS }}>{t.pair}</div>
+                        <div className="text-xs" style={{ color: 'var(--tf-subtle)' }}>{new Date(t.opened_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {t.pnl_pips > 0 ? '+' : ''}{t.pnl_pips} pips</div>
+                      </div>
+                      <div className="text-sm font-semibold" style={{ color: t.result === 'LOSS' ? '#F87171' : '#4ADE80', fontFamily: SYS }}>
+                        {t.result}
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium" style={{ color: 'var(--tf-text)', fontFamily: SYS }}>{pair}</div>
-                      <div className="text-xs" style={{ color: 'var(--tf-subtle)' }}>{time} · {pips} pips</div>
-                    </div>
-                    <div className="text-sm font-semibold" style={{ color: profit.startsWith('-') ? '#F87171' : '#4ADE80', fontFamily: SYS }}>{profit}</div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -135,7 +185,7 @@ export default function CopyDashboard() {
           <div className="mt-6 rounded-2xl p-6 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.05))', border: '1px solid rgba(201,168,76,.25)' }}>
             <div>
               <div className="font-semibold" style={{ fontFamily: SYS, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Discover more traders</div>
-              <div className="text-sm mt-1" style={{ color: 'var(--tf-muted)' }}>150+ verified traders available on the marketplace</div>
+              <div className="text-sm mt-1" style={{ color: 'var(--tf-muted)' }}>Browse verified master traders on the marketplace</div>
             </div>
             <Link href="/marketplace" className="btn-gold rounded-full px-6 py-2.5 text-sm font-semibold shrink-0">Browse All →</Link>
           </div>

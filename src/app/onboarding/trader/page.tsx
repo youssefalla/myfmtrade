@@ -1,23 +1,78 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import type { Gig } from '@/types/database'
 
 const STEPS = ['Broker', 'Risk Settings', 'Pick Trader', 'Activate']
+const BROKERS = ['Exness', 'XM', 'IC Markets', 'Pepperstone', 'HFM', 'Vantage', 'FxPro', 'Other']
 
 export default function TraderOnboarding() {
   const [step, setStep] = useState(0)
   const [broker, setBroker] = useState('')
   const [risk, setRisk] = useState('5')
+  const [selectedMaster, setSelectedMaster] = useState<string | null>(null)
+  const [masters, setMasters] = useState<Gig[]>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
 
-  const brokers = ['Exness', 'XM', 'IC Markets', 'Pepperstone', 'HFM', 'Vantage', 'FxPro', 'Other']
+  useEffect(() => {
+    async function loadMasters() {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('gigs')
+        .select('*, profiles(*)')
+        .eq('is_active', true)
+        .limit(3)
+      if (data) setMasters(data as Gig[])
+    }
+    if (step === 2) loadMasters()
+  }, [step])
+
+  async function activate() {
+    setSaving(true); setError('')
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      // Upsert profile
+      const { error: pErr } = await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: user.user_metadata?.full_name ?? '',
+        role: 'trader',
+        city: null,
+        bio: null,
+      })
+      if (pErr) throw pErr
+
+      // Follow selected master
+      if (selectedMaster) {
+        const { error: fErr } = await supabase.from('follows').upsert({
+          trader_id: user.id,
+          master_id: selectedMaster,
+        }, { onConflict: 'trader_id,master_id' })
+        if (fErr) throw fErr
+      }
+
+      setDone(true)
+      setStep(3)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 tf-page">
       <div className="w-full max-w-xl">
         <div className="flex items-center justify-between mb-10">
-          <Link href="/" className="flex items-center gap-2 justify-center">
+          <Link href="/" className="flex items-center gap-2">
             <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14.5" stroke="#C9A84C" strokeWidth="1"/><path d="M22 9 A 11 11 0 1 0 22 23 A 8 8 0 1 1 22 9 Z" fill="#C9A84C"/><path d="M11 21 L21 11 M16 11 H21 V16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             <span style={{ fontFamily: 'var(--font-syne)', fontWeight: 700, color: 'var(--tf-text)' }}>Trade<span style={{ color: '#C9A84C' }}>Flow</span></span>
           </Link>
@@ -30,12 +85,12 @@ export default function TraderOnboarding() {
             <div key={s} className="flex items-center gap-2">
               <div className="flex flex-col items-center">
                 <div className="w-8 h-8 rounded-full grid place-items-center text-xs font-mono font-bold"
-                  style={{ background: i <= step ? '#C9A84C' : 'var(--tf-border)', color: i <= step ? '#0A0C0F' : 'var(--tf-subtle)', border: i <= step ? 'none' : '1px solid var(--tf-border)' }}>
+                  style={{ background: i <= step ? '#C9A84C' : 'var(--tf-border)', color: i <= step ? '#0A0C0F' : 'var(--tf-subtle)' }}>
                   {i < step ? '✓' : i + 1}
                 </div>
                 <div className="text-[10px] font-mono uppercase tracking-wider mt-1 hidden sm:block" style={{ color: i === step ? '#C9A84C' : 'var(--tf-subtle)' }}>{s}</div>
               </div>
-              {i < STEPS.length - 1 && <div className="w-8 h-px mb-4" style={{ background: i < step ? '#C9A84C' : 'var(--tf-border)' }}></div>}
+              {i < STEPS.length - 1 && <div className="w-8 h-px mb-4" style={{ background: i < step ? '#C9A84C' : 'var(--tf-border)' }}/>}
             </div>
           ))}
         </div>
@@ -43,10 +98,10 @@ export default function TraderOnboarding() {
         <div className="rounded-2xl p-8 tf-card-gold">
           {step === 0 && (
             <div>
-              <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Create your trading account</h2>
-              <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>Choose your broker. We&apos;ll connect via MT5 read-only API — we never withdraw.</p>
+              <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Choose your broker</h2>
+              <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>We connect via MT5 read-only API — we never withdraw.</p>
               <div className="grid grid-cols-2 gap-3">
-                {brokers.map(b => (
+                {BROKERS.map(b => (
                   <button key={b} onClick={() => setBroker(b)}
                     className="rounded-xl p-4 text-sm font-medium text-left transition-all"
                     style={{ border: broker === b ? '1px solid #C9A84C' : '1px solid var(--tf-border)', background: broker === b ? 'rgba(201,168,76,.1)' : 'var(--tf-card-inner)', color: broker === b ? '#C9A84C' : 'var(--tf-muted)' }}>
@@ -66,7 +121,7 @@ export default function TraderOnboarding() {
           {step === 1 && (
             <div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Set your risk limits</h2>
-              <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>We&apos;ll never let a copied trade exceed these limits.</p>
+              <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>We never let a copied trade exceed these limits.</p>
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -78,7 +133,7 @@ export default function TraderOnboarding() {
                 <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.18)' }}>
                   <div className="text-xs font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--tf-muted)' }}>Risk profile</div>
                   <div style={{ color: 'var(--tf-text)' }}>
-                    {parseInt(risk) <= 5 ? '🛡️ Conservative — Safe, slower growth' : parseInt(risk) <= 12 ? '⚖️ Balanced — Standard risk/reward' : '🔥 Aggressive — High potential, high risk'}
+                    {parseInt(risk) <= 5 ? 'Conservative — Safe, slower growth' : parseInt(risk) <= 12 ? 'Balanced — Standard risk/reward' : 'Aggressive — High potential, high risk'}
                   </div>
                 </div>
               </div>
@@ -89,30 +144,37 @@ export default function TraderOnboarding() {
             <div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Pick your first trader</h2>
               <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>You can change this anytime from your dashboard.</p>
-              <div className="space-y-3">
-                {[
-                  { init:'YA', name:'Youssef Amrani', roi:'+34.2%', win:82 },
-                  { init:'SC', name:'Salma Chraibi',  roi:'+21.7%', win:76 },
-                  { init:'MB', name:'Mehdi Benjelloun',roi:'+18.4%', win:71 },
-                ].map(({ init, name, roi, win }) => (
-                  <div key={name} className="flex items-center gap-4 rounded-xl p-4 cursor-pointer transition-all" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#C9A84C'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--tf-border)'}>
-                    <div className="w-12 h-12 rounded-full grid place-items-center font-bold" style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: 'var(--font-syne)' }}>{init}</div>
-                    <div className="flex-1">
-                      <div className="font-medium" style={{ color: 'var(--tf-text)' }}>{name}</div>
-                      <div className="text-xs font-mono mt-0.5" style={{ color: 'var(--tf-subtle)' }}>Win rate: {win}%</div>
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-syne)', color: '#4ADE80', fontSize: '1.25rem', fontWeight: 600 }}>{roi}</div>
-                  </div>
-                ))}
-              </div>
+              {masters.length === 0 ? (
+                <div className="text-sm text-center py-8" style={{ color: 'var(--tf-subtle)' }}>No masters available yet — skip and browse later.</div>
+              ) : (
+                <div className="space-y-3">
+                  {masters.map(gig => {
+                    const p = gig.profiles
+                    const init = p?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?'
+                    return (
+                      <div key={gig.id} onClick={() => setSelectedMaster(gig.master_id)}
+                        className="flex items-center gap-4 rounded-xl p-4 cursor-pointer transition-all"
+                        style={{ background: 'var(--tf-card-inner)', border: selectedMaster === gig.master_id ? '1px solid #C9A84C' : '1px solid var(--tf-border)' }}>
+                        <div className="w-12 h-12 rounded-full grid place-items-center font-bold shrink-0" style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: 'var(--font-syne)' }}>{init}</div>
+                        <div className="flex-1">
+                          <div className="font-medium" style={{ color: 'var(--tf-text)' }}>{p?.full_name ?? 'Master Trader'}</div>
+                          <div className="text-xs font-mono mt-0.5" style={{ color: 'var(--tf-subtle)' }}>{gig.style ?? 'Trader'} · {gig.performance_fee}% fee</div>
+                        </div>
+                        <div style={{ fontFamily: 'var(--font-syne)', color: '#4ADE80', fontSize: '1.1rem', fontWeight: 600 }}>{gig.roi_30d > 0 ? `+${gig.roi_30d}%` : '—'}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+              {error && <p className="mt-4 text-xs font-mono" style={{ color: '#F87171' }}>{error}</p>}
             </div>
           )}
 
-          {step === 3 && (
+          {step === 3 && done && (
             <div className="text-center py-6">
-              <div className="text-6xl mb-4">✅</div>
+              <div className="w-16 h-16 rounded-full grid place-items-center mx-auto mb-4" style={{ background: 'rgba(74,222,128,.15)', border: '1px solid rgba(74,222,128,.3)' }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)' }}>You&apos;re all set!</h2>
               <p className="mt-3 text-sm mb-8" style={{ color: 'var(--tf-muted)' }}>Your account is connected. Trades will be copied automatically.</p>
               <Link href="/dashboard/copy" className="btn-gold rounded-full px-8 py-3.5 text-sm font-semibold">Go to Dashboard →</Link>
@@ -123,9 +185,12 @@ export default function TraderOnboarding() {
             {step > 0 && step < 3 && (
               <button onClick={() => setStep(s => s - 1)} className="btn-outline rounded-xl px-6 py-3 text-sm font-medium flex-1">← Back</button>
             )}
-            {step < 3 && (
-              <button onClick={() => setStep(s => s + 1)} className="btn-gold rounded-xl py-3 text-sm font-semibold flex-1">
-                {step === 2 ? 'Activate Copy Trading 🚀' : 'Continue →'}
+            {step < 2 && (
+              <button onClick={() => setStep(s => s + 1)} className="btn-gold rounded-xl py-3 text-sm font-semibold flex-1">Continue →</button>
+            )}
+            {step === 2 && (
+              <button onClick={activate} disabled={saving} className="btn-gold rounded-xl py-3 text-sm font-semibold flex-1">
+                {saving ? 'Activating…' : 'Activate Copy Trading →'}
               </button>
             )}
           </div>
