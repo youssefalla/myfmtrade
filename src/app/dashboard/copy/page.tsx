@@ -12,10 +12,10 @@ const traders = [
 ]
 
 const recentTrades = [
-  { pair:'XAUUSD', dir:'BUY',  pips:'+38', time:'09:24', profit:'+240 MAD' },
-  { pair:'EURUSD', dir:'SELL', pips:'-12', time:'11:05', profit:'-74 MAD' },
-  { pair:'US30',   dir:'BUY',  pips:'+95', time:'14:37', profit:'+601 MAD' },
-  { pair:'XAUUSD', dir:'SELL', pips:'+22', time:'16:12', profit:'+138 MAD' },
+  { pair:'XAUUSD', dir:'BUY',  pips:'+38', time:'09:24', profit:'+$240' },
+  { pair:'EURUSD', dir:'SELL', pips:'-12', time:'11:05', profit:'-$74' },
+  { pair:'US30',   dir:'BUY',  pips:'+95', time:'14:37', profit:'+$601' },
+  { pair:'XAUUSD', dir:'SELL', pips:'+22', time:'16:12', profit:'+$138' },
 ]
 
 const navItems = [
@@ -71,10 +71,10 @@ export default function CopyDashboard() {
           {/* KPI cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label:'Total P/L',     value:'+1,284 MAD', color:'#4ADE80',        sub:'This month' },
+              { label:'Total P/L',     value:'+$1,284',     color:'#4ADE80',        sub:'This month' },
               { label:'Copied Trades', value:'47',         color:'var(--tf-text)', sub:'This month' },
               { label:'Win Rate',      value:'71%',        color:'#C9A84C',        sub:'All traders' },
-              { label:'Rebates',       value:'38 MAD',     color:'#E8C97A',        sub:'This week' },
+              { label:'Rebates',       value:'$38',         color:'#E8C97A',        sub:'This week' },
             ].map(({ label, value, color, sub }) => (
               <div key={label} className="rounded-2xl p-5 tf-card-bg">
                 <div className="text-xs uppercase tracking-widest mb-2" style={{ color: 'var(--tf-subtle)', letterSpacing: '0.08em' }}>{label}</div>
@@ -124,7 +124,7 @@ export default function CopyDashboard() {
                       <div className="text-sm font-medium" style={{ color: 'var(--tf-text)', fontFamily: SYS }}>{pair}</div>
                       <div className="text-xs" style={{ color: 'var(--tf-subtle)' }}>{time} · {pips} pips</div>
                     </div>
-                    <div className="text-sm font-semibold" style={{ color: profit.startsWith('+') ? '#4ADE80' : '#F87171', fontFamily: SYS }}>{profit}</div>
+                    <div className="text-sm font-semibold" style={{ color: profit.startsWith('-') ? '#F87171' : '#4ADE80', fontFamily: SYS }}>{profit}</div>
                   </div>
                 ))}
               </div>

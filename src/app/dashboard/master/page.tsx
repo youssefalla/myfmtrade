@@ -7,10 +7,10 @@ import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings } fr
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
 
 const followers = [
-  { init:'MA', name:'Mohammed A.', city:'Casablanca', since:'3 months', profit:'+2,840 MAD' },
-  { init:'LT', name:'Leila T.',     city:'Tangier',    since:'1 month',  profit:'+940 MAD' },
-  { init:'OB', name:'Omar B.',      city:'Fès',        since:'2 weeks',  profit:'+380 MAD' },
-  { init:'SA', name:'Samira A.',    city:'Rabat',      since:'5 days',   profit:'+140 MAD' },
+  { init:'MA', name:'Mohammed A.', city:'Casablanca', since:'3 months', profit:'+$2,840' },
+  { init:'LT', name:'Leila T.',     city:'Tangier',    since:'1 month',  profit:'+$940' },
+  { init:'OB', name:'Omar B.',      city:'Fès',        since:'2 weeks',  profit:'+$380' },
+  { init:'SA', name:'Samira A.',    city:'Rabat',      since:'5 days',   profit:'+$140' },
 ]
 
 const trades = [
@@ -80,7 +80,7 @@ export default function MasterDashboard() {
             {[
               { label:'Total Followers', value:'47',        color:'var(--tf-text)', sub:'↑ 8 this week' },
               { label:'30D ROI',         value:'+34.2%',    color:'#4ADE80',        sub:'All time high' },
-              { label:'Perf. Fees',      value:'3,240 MAD', color:'#C9A84C',        sub:'This month' },
+              { label:'Perf. Fees',      value:'$3,240',     color:'#C9A84C',        sub:'This month' },
               { label:'Win Rate',        value:'82%',       color:'#E8C97A',        sub:'Last 60 trades' },
             ].map(({ label, value, color, sub }) => (
               <div key={label} className="rounded-2xl p-5 tf-card-bg">
@@ -144,9 +144,9 @@ export default function MasterDashboard() {
             </div>
             <div className="grid md:grid-cols-3 gap-4">
               {[
-                { title:'SMC Masterclass',  price:'499 MAD',     sales:23, type:'Course' },
-                { title:'Gold Signals VIP', price:'199 MAD/mo',  sales:31, type:'Signal' },
-                { title:'1-on-1 Mentoring', price:'1,200 MAD',   sales:5,  type:'Service' },
+                { title:'SMC Masterclass',  price:'$499',      sales:23, type:'Course' },
+                { title:'Gold Signals VIP', price:'$199/mo',   sales:31, type:'Signal' },
+                { title:'1-on-1 Mentoring', price:'$1,200',    sales:5,  type:'Service' },
               ].map(({ title, price, sales, type }) => (
                 <div key={title} className="rounded-xl p-4" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
                   <div className="text-[10px] uppercase tracking-widest mb-2" style={{ color: '#C9A84C', letterSpacing: '0.1em' }}>{type}</div>
