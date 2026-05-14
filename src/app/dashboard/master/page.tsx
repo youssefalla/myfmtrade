@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Plus } from 'lucide-react'
+import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Plus, Camera } from 'lucide-react'
 import type { Profile, Gig, Trade } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
@@ -31,6 +31,33 @@ export default function MasterDashboard() {
   const [gigForm, setGigForm] = useState({ city: '', bio: '', style: '', instruments: [] as string[], fee: '10' })
   const [saving, setSaving] = useState(false)
   const [gigError, setGigError] = useState('')
+
+  // Avatar upload
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarUploading(true)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const ext = file.name.split('.').pop()
+      const path = `${user.id}/avatar.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type })
+      if (uploadError) throw uploadError
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id)
+      setProfile(p => p ? { ...p, avatar_url: publicUrl } : p)
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -107,9 +134,20 @@ export default function MasterDashboard() {
         </Link>
 
         <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.2)' }}>
-          <div className="w-14 h-14 rounded-full grid place-items-center mx-auto mb-3 font-bold text-xl overflow-hidden" style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: SYS }}>
-            {profile?.avatar_url ? <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" /> : initials}
-          </div>
+          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          <button type="button" onClick={() => avatarInputRef.current?.click()}
+            className="relative w-14 h-14 rounded-full mx-auto mb-3 block overflow-hidden group"
+            style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)' }}
+            title="Change photo">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="w-full h-full grid place-items-center font-bold text-xl" style={{ color: '#1F2329', fontFamily: SYS }}>{initials}</span>
+            )}
+            <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.5)' }}>
+              {avatarUploading ? <span className="text-white text-[10px] font-mono">...</span> : <Camera size={16} color="white" />}
+            </div>
+          </button>
           <div className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>{profile?.full_name ?? '—'}</div>
           <div className="text-xs mt-0.5" style={{ color: '#C9A84C' }}>Master Trader ✓</div>
           {profile?.city && <div className="text-xs mt-2" style={{ color: 'var(--tf-subtle)' }}>{profile.city}</div>}
