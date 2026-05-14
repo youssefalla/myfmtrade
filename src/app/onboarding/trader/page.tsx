@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { Camera } from 'lucide-react'
 import type { Gig } from '@/types/database'
 
-const STEPS = ['Broker', 'Risk Settings', 'Pick Trader', 'Activate']
+const STEPS = ['Photo', 'Broker', 'Risk Settings', 'Pick Trader', 'Activate']
 const BROKERS = ['Exness', 'XM', 'IC Markets', 'Pepperstone', 'HFM', 'Vantage', 'FxPro', 'Other']
 
 export default function TraderOnboarding() {
@@ -18,6 +19,20 @@ export default function TraderOnboarding() {
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
+  // Avatar state
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setAvatarPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
   useEffect(() => {
     async function loadMasters() {
       const { createClient } = await import('@/lib/supabase/client')
@@ -29,8 +44,15 @@ export default function TraderOnboarding() {
         .limit(3)
       if (data) setMasters(data as Gig[])
     }
-    if (step === 2) loadMasters()
+    if (step === 3) loadMasters()
   }, [step])
+
+  function next() {
+    if (step === 0 && !avatarFile) { setError('Please upload a profile photo to continue.'); return }
+    setError('')
+    if (step < STEPS.length - 1) setStep(s => s + 1)
+  }
+  function back() { setError(''); if (step > 0) setStep(s => s - 1) }
 
   async function activate() {
     setSaving(true); setError('')
@@ -40,6 +62,19 @@ export default function TraderOnboarding() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
+      // Upload avatar
+      let avatarUrl: string | null = null
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop()
+        const path = `${user.id}/avatar.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type })
+        if (uploadError) throw new Error('Photo upload failed: ' + uploadError.message)
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+        avatarUrl = publicUrl
+      }
+
       // Upsert profile
       const { error: pErr } = await supabase.from('profiles').upsert({
         id: user.id,
@@ -47,6 +82,7 @@ export default function TraderOnboarding() {
         role: 'trader',
         city: null,
         bio: null,
+        avatar_url: avatarUrl,
       })
       if (pErr) throw pErr
 
@@ -60,7 +96,7 @@ export default function TraderOnboarding() {
       }
 
       setDone(true)
-      setStep(3)
+      setStep(4)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -96,7 +132,42 @@ export default function TraderOnboarding() {
         </div>
 
         <div className="rounded-2xl p-8 tf-card-gold">
+
+          {/* Step 0 — Photo */}
           {step === 0 && (
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Upload your profile photo</h2>
+              <p className="mt-2 text-sm mb-8" style={{ color: 'var(--tf-muted)' }}>Add a photo so traders know who you are.</p>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+              <div className="flex flex-col items-center gap-4">
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  className="relative w-32 h-32 rounded-full flex items-center justify-center transition-all overflow-hidden"
+                  style={{ border: avatarFile ? '2px solid #C9A84C' : '2px dashed var(--tf-border)', background: 'var(--tf-card-inner)' }}>
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Camera size={28} style={{ color: 'var(--tf-subtle)' }} />
+                      <span className="text-xs font-mono" style={{ color: 'var(--tf-subtle)' }}>Tap to upload</span>
+                    </div>
+                  )}
+                  {avatarPreview && (
+                    <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                      style={{ background: 'rgba(0,0,0,0.45)' }}>
+                      <Camera size={22} color="white" />
+                    </div>
+                  )}
+                </button>
+                <span className="text-xs font-mono" style={{ color: avatarFile ? '#C9A84C' : 'var(--tf-subtle)' }}>
+                  {avatarFile ? avatarFile.name : 'Required — JPG, PNG or WEBP'}
+                </span>
+              </div>
+              {error && <p className="mt-4 text-xs font-mono text-center" style={{ color: '#F87171' }}>{error}</p>}
+            </div>
+          )}
+
+          {/* Step 1 — Broker */}
+          {step === 1 && (
             <div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Choose your broker</h2>
               <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>We connect via MT5 read-only API — we never withdraw.</p>
@@ -118,7 +189,8 @@ export default function TraderOnboarding() {
             </div>
           )}
 
-          {step === 1 && (
+          {/* Step 2 — Risk */}
+          {step === 2 && (
             <div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Set your risk limits</h2>
               <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>We never let a copied trade exceed these limits.</p>
@@ -140,7 +212,8 @@ export default function TraderOnboarding() {
             </div>
           )}
 
-          {step === 2 && (
+          {/* Step 3 — Pick Trader */}
+          {step === 3 && (
             <div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', fontWeight: 700, color: 'var(--tf-text)' }}>Pick your first trader</h2>
               <p className="mt-2 text-sm mb-6" style={{ color: 'var(--tf-muted)' }}>You can change this anytime from your dashboard.</p>
@@ -155,7 +228,10 @@ export default function TraderOnboarding() {
                       <div key={gig.id} onClick={() => setSelectedMaster(gig.master_id)}
                         className="flex items-center gap-4 rounded-xl p-4 cursor-pointer transition-all"
                         style={{ background: 'var(--tf-card-inner)', border: selectedMaster === gig.master_id ? '1px solid #C9A84C' : '1px solid var(--tf-border)' }}>
-                        <div className="w-12 h-12 rounded-full grid place-items-center font-bold shrink-0" style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: 'var(--font-syne)' }}>{init}</div>
+                        <div className="w-12 h-12 rounded-full grid place-items-center font-bold shrink-0 overflow-hidden"
+                          style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: 'var(--font-syne)' }}>
+                          {p?.avatar_url ? <img src={p.avatar_url} alt={p.full_name} className="w-full h-full object-cover" /> : init}
+                        </div>
                         <div className="flex-1">
                           <div className="font-medium" style={{ color: 'var(--tf-text)' }}>{p?.full_name ?? 'Master Trader'}</div>
                           <div className="text-xs font-mono mt-0.5" style={{ color: 'var(--tf-subtle)' }}>{gig.style ?? 'Trader'} · {gig.performance_fee}% fee</div>
@@ -170,10 +246,11 @@ export default function TraderOnboarding() {
             </div>
           )}
 
-          {step === 3 && done && (
+          {/* Step 4 — Done */}
+          {step === 4 && done && (
             <div className="text-center py-6">
-              <div className="w-16 h-16 rounded-full grid place-items-center mx-auto mb-4" style={{ background: 'rgba(74,222,128,.15)', border: '1px solid rgba(74,222,128,.3)' }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+              <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4" style={{ border: '2px solid #C9A84C' }}>
+                {avatarPreview && <img src={avatarPreview} alt="You" className="w-full h-full object-cover" />}
               </div>
               <h2 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)' }}>You&apos;re all set!</h2>
               <p className="mt-3 text-sm mb-8" style={{ color: 'var(--tf-muted)' }}>Your account is connected. Trades will be copied automatically.</p>
@@ -182,13 +259,13 @@ export default function TraderOnboarding() {
           )}
 
           <div className="flex gap-3 mt-8">
-            {step > 0 && step < 3 && (
-              <button onClick={() => setStep(s => s - 1)} className="btn-outline rounded-xl px-6 py-3 text-sm font-medium flex-1">← Back</button>
+            {step > 0 && step < 4 && (
+              <button onClick={back} className="btn-outline rounded-xl px-6 py-3 text-sm font-medium flex-1">← Back</button>
             )}
-            {step < 2 && (
-              <button onClick={() => setStep(s => s + 1)} className="btn-gold rounded-xl py-3 text-sm font-semibold flex-1">Continue →</button>
+            {step < 3 && (
+              <button onClick={next} className="btn-gold rounded-xl py-3 text-sm font-semibold flex-1">Continue →</button>
             )}
-            {step === 2 && (
+            {step === 3 && (
               <button onClick={activate} disabled={saving} className="btn-gold rounded-xl py-3 text-sm font-semibold flex-1">
                 {saving ? 'Activating…' : 'Activate Copy Trading →'}
               </button>
