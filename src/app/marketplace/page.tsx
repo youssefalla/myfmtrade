@@ -12,21 +12,46 @@ export default function Marketplace() {
   const [sort, setSort] = useState('roi')
   const [gigs, setGigs] = useState<Gig[]>([])
   const [loading, setLoading] = useState(true)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set())
+  const [following, setFollowing] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function load() {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
-      const { data } = await supabase
-        .from('gigs')
-        .select('*, profiles(*)')
-        .eq('is_active', true)
-        .order('roi_30d', { ascending: false })
-      setGigs((data ?? []) as Gig[])
+      const { data: { user } } = await supabase.auth.getUser()
+      setUserId(user?.id ?? null)
+
+      const [gigsRes, followsRes] = await Promise.all([
+        supabase.from('gigs').select('*, profiles(*)').eq('is_active', true).order('roi_30d', { ascending: false }),
+        user ? supabase.from('follows').select('master_id').eq('trader_id', user.id) : Promise.resolve({ data: [] }),
+      ])
+      setGigs((gigsRes.data ?? []) as Gig[])
+      const ids = new Set((followsRes.data ?? []).map((f: { master_id: string }) => f.master_id))
+      setFollowedIds(ids)
       setLoading(false)
     }
     load()
   }, [])
+
+  async function handleFollow(masterId: string) {
+    if (!userId) { window.location.href = '/login'; return }
+    if (following.has(masterId)) return
+
+    setFollowing(s => new Set(s).add(masterId))
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+
+    if (followedIds.has(masterId)) {
+      await supabase.from('follows').delete().eq('trader_id', userId).eq('master_id', masterId)
+      setFollowedIds(s => { const n = new Set(s); n.delete(masterId); return n })
+    } else {
+      await supabase.from('follows').upsert({ trader_id: userId, master_id: masterId }, { onConflict: 'trader_id,master_id' })
+      setFollowedIds(s => new Set(s).add(masterId))
+    }
+    setFollowing(s => { const n = new Set(s); n.delete(masterId); return n })
+  }
 
   const filtered = gigs.filter(g => {
     if (filter === 'All') return true
@@ -51,7 +76,7 @@ export default function Marketplace() {
           <div className="flex items-center gap-3">
             <Link href="/dashboard/copy" className="text-sm font-mono" style={{ color: 'var(--tf-muted)' }}>← My Dashboard</Link>
             <ThemeToggle />
-            <Link href="/signup" className="btn-gold rounded-full px-4 py-2 text-sm font-semibold">Start Copying</Link>
+            {!userId && <Link href="/login" className="btn-gold rounded-full px-4 py-2 text-sm font-semibold">Login to Copy</Link>}
           </div>
         </div>
       </header>
@@ -91,13 +116,15 @@ export default function Marketplace() {
         ) : sorted.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-sm mb-2" style={{ color: 'var(--tf-subtle)' }}>No traders available yet.</p>
-            <p className="text-xs" style={{ color: 'var(--tf-subtle)' }}>Be the first — <Link href="/masters" style={{ color: '#C9A84C' }}>apply as a master trader</Link>.</p>
+            <p className="text-xs" style={{ color: 'var(--tf-subtle)' }}>Be the first — <Link href="/signup?role=master" style={{ color: '#C9A84C' }}>apply as a master trader</Link>.</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {sorted.map(gig => {
               const p = gig.profiles
               const init = p?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?'
+              const isFollowed = followedIds.has(gig.master_id)
+              const isLoading = following.has(gig.master_id)
               return (
                 <div key={gig.id} className="ai-card p-6 flex flex-col relative" style={{ minHeight: 340 }}>
                   <div className="ai-content h-full flex flex-col">
@@ -143,7 +170,16 @@ export default function Marketplace() {
                     )}
 
                     <div className="mt-auto pt-5">
-                      <Link href="/signup?role=trader" className="btn-gold rounded-full w-full py-3 text-sm font-semibold text-center block">Copy Trader</Link>
+                      <button
+                        onClick={() => handleFollow(gig.master_id)}
+                        disabled={isLoading}
+                        className="rounded-full w-full py-3 text-sm font-semibold text-center block transition-all"
+                        style={isFollowed
+                          ? { background: 'rgba(74,222,128,.12)', border: '1px solid rgba(74,222,128,.3)', color: '#4ADE80' }
+                          : { background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329' }
+                        }>
+                        {isLoading ? '…' : isFollowed ? '✓ Following' : 'Copy Trader'}
+                      </button>
                     </div>
                   </div>
                 </div>
