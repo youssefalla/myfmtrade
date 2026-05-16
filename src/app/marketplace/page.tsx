@@ -13,8 +13,8 @@ export default function Marketplace() {
   const [gigs, setGigs] = useState<Gig[]>([])
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set())
-  const [following, setFollowing] = useState<Set<string>>(new Set())
+  const [subscribedIds, setSubscribedIds] = useState<Set<string>>(new Set())
+  const [paying, setPaying] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function load() {
@@ -23,34 +23,43 @@ export default function Marketplace() {
       const { data: { user } } = await supabase.auth.getUser()
       setUserId(user?.id ?? null)
 
-      const [gigsRes, followsRes] = await Promise.all([
+      const [gigsRes, subsRes] = await Promise.all([
         supabase.from('gigs').select('*, profiles(*)').eq('is_active', true).order('roi_30d', { ascending: false }),
-        user ? supabase.from('follows').select('master_id').eq('trader_id', user.id) : Promise.resolve({ data: [] }),
+        user
+          ? supabase.from('subscriptions').select('master_id').eq('trader_id', user.id).eq('status', 'active')
+          : Promise.resolve({ data: [] }),
       ])
       setGigs((gigsRes.data ?? []) as Gig[])
-      const ids = new Set((followsRes.data ?? []).map((f: { master_id: string }) => f.master_id))
-      setFollowedIds(ids)
+      const ids = new Set((subsRes.data ?? []).map((s: { master_id: string }) => s.master_id))
+      setSubscribedIds(ids)
       setLoading(false)
     }
     load()
   }, [])
 
-  async function handleFollow(masterId: string) {
+  async function handleCopy(masterId: string, masterName: string) {
     if (!userId) { window.location.href = '/login'; return }
-    if (following.has(masterId)) return
+    if (paying.has(masterId)) return
 
-    setFollowing(s => new Set(s).add(masterId))
-    const { createClient } = await import('@/lib/supabase/client')
-    const supabase = createClient()
-
-    if (followedIds.has(masterId)) {
-      await supabase.from('follows').delete().eq('trader_id', userId).eq('master_id', masterId)
-      setFollowedIds(s => { const n = new Set(s); n.delete(masterId); return n })
-    } else {
-      await supabase.from('follows').upsert({ trader_id: userId, master_id: masterId }, { onConflict: 'trader_id,master_id' })
-      setFollowedIds(s => new Set(s).add(masterId))
+    // Already subscribed → go to dashboard
+    if (subscribedIds.has(masterId)) {
+      window.location.href = '/dashboard/copy'
+      return
     }
-    setFollowing(s => { const n = new Set(s); n.delete(masterId); return n })
+
+    setPaying(s => new Set(s).add(masterId))
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ masterId, masterName }),
+      })
+      const { url, error } = await res.json()
+      if (error) { alert(error); return }
+      window.location.href = url
+    } finally {
+      setPaying(s => { const n = new Set(s); n.delete(masterId); return n })
+    }
   }
 
   const filtered = gigs.filter(g => {
@@ -123,17 +132,15 @@ export default function Marketplace() {
             {sorted.map(gig => {
               const p = gig.profiles
               const init = p?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?'
-              const isFollowed = followedIds.has(gig.master_id)
-              const isLoading = following.has(gig.master_id)
+              const isSubscribed = subscribedIds.has(gig.master_id)
+              const isLoading = paying.has(gig.master_id)
               return (
                 <div key={gig.id} className="ai-card p-6 flex flex-col relative" style={{ minHeight: 340 }}>
                   <div className="ai-content h-full flex flex-col">
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-full shrink-0 overflow-hidden grid place-items-center font-bold text-xl"
                         style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329', fontFamily: 'var(--font-syne)', boxShadow: '0 8px 20px rgba(201,168,76,.2)' }}>
-                        {p?.avatar_url ? (
-                          <img src={p.avatar_url} alt={p.full_name} className="w-full h-full object-cover" />
-                        ) : init}
+                        {p?.avatar_url ? <img src={p.avatar_url} alt={p.full_name} className="w-full h-full object-cover" /> : init}
                       </div>
                       <div className="min-w-0">
                         <div className="font-semibold text-base truncate" style={{ color: '#F0EDE8', fontFamily: 'var(--font-syne)' }}>{p?.full_name ?? '—'}</div>
@@ -143,12 +150,16 @@ export default function Marketplace() {
                       </div>
                     </div>
 
-                    <div className="mt-6 flex items-end gap-3">
+                    <div className="mt-6 flex items-end justify-between">
                       <div>
                         <div className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'rgba(240,237,232,.45)' }}>30D ROI</div>
                         <div style={{ fontFamily: 'var(--font-syne)', fontSize: '2.5rem', color: '#4ADE80', fontWeight: 700, lineHeight: 1 }}>
                           {gig.roi_30d > 0 ? `+${gig.roi_30d}%` : '—'}
                         </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] font-mono uppercase tracking-widest" style={{ color: 'rgba(240,237,232,.45)' }}>Monthly</div>
+                        <div style={{ fontFamily: 'var(--font-syne)', fontSize: '1.25rem', color: '#C9A84C', fontWeight: 700 }}>$35</div>
                       </div>
                     </div>
 
@@ -171,14 +182,14 @@ export default function Marketplace() {
 
                     <div className="mt-auto pt-5">
                       <button
-                        onClick={() => handleFollow(gig.master_id)}
+                        onClick={() => handleCopy(gig.master_id, p?.full_name ?? 'Master')}
                         disabled={isLoading}
                         className="rounded-full w-full py-3 text-sm font-semibold text-center block transition-all"
-                        style={isFollowed
+                        style={isSubscribed
                           ? { background: 'rgba(74,222,128,.12)', border: '1px solid rgba(74,222,128,.3)', color: '#4ADE80' }
                           : { background: 'linear-gradient(135deg,#E0C26A,#C9A84C)', color: '#1F2329' }
                         }>
-                        {isLoading ? '…' : isFollowed ? '✓ Following' : 'Copy Trader'}
+                        {isLoading ? 'Redirecting…' : isSubscribed ? '✓ Subscribed · Go to Dashboard' : 'Copy Trader — $35/mo'}
                       </button>
                     </div>
                   </div>
