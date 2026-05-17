@@ -4,13 +4,14 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Camera, Brain, Monitor, BookOpen, Video } from 'lucide-react'
+import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Camera, Brain, Monitor, BookOpen, Video, BarChart2 } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
 
 const navItems = [
   { icon: Monitor,         label: 'MT Dashboard', href: '/dashboard/master/mt' },
+  { icon: BarChart2,       label: 'Live Chart',   href: '/dashboard/master/chart' },
   { icon: Brain,           label: 'Strategy',     href: '/dashboard/master/strategy' },
   { icon: Video,           label: 'Live',         href: '/dashboard/master/live' },
   { icon: Radio,           label: 'Community',    href: '/dashboard/master/community' },
