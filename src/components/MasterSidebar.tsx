@@ -15,12 +15,9 @@ const navItems = [
   { icon: Brain,           label: 'Strategy',     href: '/dashboard/master/strategy' },
   { icon: Video,           label: 'Live',         href: '/dashboard/master/live' },
   { icon: Radio,           label: 'Community',    href: '/dashboard/master/community' },
-  { icon: BookOpen,        label: 'Courses',      href: '/dashboard/master/courses' },
-  { icon: Eye,             label: 'Gig Profile',  href: '/dashboard/master/gig' },
-  { icon: Users,           label: 'Followers',    href: '/dashboard/master/followers' },
   { icon: TrendingUp,      label: 'My Trades',    href: '/dashboard/master/trades' },
-  { icon: Banknote,        label: 'Earnings',     href: '/dashboard/master/earnings' },
   { icon: Settings,        label: 'Settings',     href: '/dashboard/master/settings' },
+  // hidden for now: Courses, Gig Profile, Followers, Earnings
 ]
 
 interface Props {
