@@ -1,4 +1,4 @@
-export type Role = 'master' | 'trader' | 'coach'
+export type Role = 'master' | 'trader'
 
 export interface Profile {
   id: string
