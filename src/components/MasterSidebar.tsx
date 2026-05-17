@@ -10,7 +10,6 @@ import type { Profile } from '@/types/database'
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
 
 const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard',    href: '/dashboard/master' },
   { icon: Monitor,         label: 'MT Dashboard', href: '/dashboard/master/mt' },
   { icon: Brain,           label: 'Strategy',     href: '/dashboard/master/strategy' },
   { icon: Video,           label: 'Live',         href: '/dashboard/master/live' },
