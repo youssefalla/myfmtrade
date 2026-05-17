@@ -32,6 +32,7 @@ export default function CommunityPage() {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
+  const [sendError, setSendError] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -68,7 +69,13 @@ export default function CommunityPage() {
             .select('*, profiles(full_name, avatar_url, role)')
             .eq('id', payload.new.id)
             .single()
-          if (data) setMessages(prev => [...prev, data as Message])
+          if (data) {
+            setMessages(prev => {
+              // Remove optimistic version if exists, then add real one
+              const filtered = prev.filter(m => !m.id.startsWith('opt-') || m.user_id !== payload.new.user_id || m.content !== payload.new.content)
+              return [...filtered, data as Message]
+            })
+          }
         })
         .subscribe()
 
@@ -82,14 +89,36 @@ export default function CommunityPage() {
   }, [messages])
 
   async function sendMessage() {
-    if (!input.trim() || sending) return
+    if (!input.trim() || sending || !userId) return
     setSending(true)
+    setSendError('')
     const content = input.trim()
     setInput('')
+
+    // Optimistic update — show message immediately
+    const optimistic: Message = {
+      id: `opt-${Date.now()}`,
+      content,
+      created_at: new Date().toISOString(),
+      user_id: userId,
+      profiles: {
+        full_name: profile?.full_name ?? null,
+        avatar_url: profile?.avatar_url ?? null,
+        role: profile?.role ?? 'master',
+      },
+    }
+    setMessages(prev => [...prev, optimistic])
+
     try {
       const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
-      await supabase.from('community_messages').insert({ content, user_id: userId })
+      const { error } = await supabase.from('community_messages').insert({ content, user_id: userId })
+      if (error) {
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== optimistic.id))
+        setSendError(error.message)
+        setInput(content)
+      }
     } finally {
       setSending(false)
       inputRef.current?.focus()
@@ -192,6 +221,7 @@ export default function CommunityPage() {
 
         {/* Input */}
         <div className="px-6 py-4 shrink-0" style={{ borderTop: '1px solid var(--tf-border)' }}>
+          {sendError && <p className="text-xs font-mono mb-2 text-center" style={{ color: '#F87171' }}>{sendError}</p>}
           <div className="flex gap-3 items-center max-w-3xl mx-auto">
             <input
               ref={inputRef}
