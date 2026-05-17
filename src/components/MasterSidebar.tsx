@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Camera, Brain, Monitor } from 'lucide-react'
+import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Camera, Brain, Monitor, BookOpen, Video } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
@@ -13,11 +13,13 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard',    href: '/dashboard/master' },
   { icon: Monitor,         label: 'MT Dashboard', href: '/dashboard/master/mt' },
   { icon: Brain,           label: 'Strategy',     href: '/dashboard/master/strategy' },
+  { icon: Video,           label: 'Live',         href: '/dashboard/master/live' },
+  { icon: Radio,           label: 'Community',    href: '/dashboard/master/community' },
+  { icon: BookOpen,        label: 'Courses',      href: '/dashboard/master/courses' },
   { icon: Eye,             label: 'Gig Profile',  href: '/dashboard/master/gig' },
   { icon: Users,           label: 'Followers',    href: '/dashboard/master/followers' },
   { icon: TrendingUp,      label: 'My Trades',    href: '/dashboard/master/trades' },
   { icon: Banknote,        label: 'Earnings',     href: '/dashboard/master/earnings' },
-  { icon: Radio,           label: 'Community',    href: '/marketplace' },
   { icon: Settings,        label: 'Settings',     href: '/dashboard/master/settings' },
 ]
 
