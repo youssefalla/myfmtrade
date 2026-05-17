@@ -88,8 +88,7 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
         })}
       </nav>
 
-      <div className="flex items-center gap-2">
-        <Link href="/marketplace" className="btn-outline rounded-xl py-2.5 px-4 text-sm font-medium text-center flex-1">View My Gig →</Link>
+      <div className="flex justify-end">
         <ThemeToggle />
       </div>
     </aside>
