@@ -70,6 +70,7 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
                 WebkitBackdropFilter: active ? 'blur(16px)' : undefined,
                 color: active ? '#C9A84C' : 'var(--tf-muted)',
                 border: active ? '1px solid rgba(201,168,76,.22)' : '1px solid transparent',
+                boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,.08), inset 1px 0 0 rgba(255,255,255,.04)' : undefined,
               }}>
               <Icon size={16} strokeWidth={1.7} />
               <span className="flex-1">{label}</span>
