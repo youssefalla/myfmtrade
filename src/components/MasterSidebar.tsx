@@ -10,6 +10,24 @@ import type { Profile } from '@/types/database'
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
 const COMMUNITY_HREF = '/dashboard/master/community'
 
+function playPop() {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.12)
+    gain.gain.setValueAtTime(0.25, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.15)
+    osc.onended = () => ctx.close()
+  } catch {}
+}
+
 const navItems = [
   { icon: Monitor,       label: 'MT Dashboard', href: '/dashboard/master/mt' },
   { icon: BarChart2,     label: 'Live Chart',   href: '/dashboard/master/chart' },
@@ -60,6 +78,7 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
         .channel('sidebar-community')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages' }, () => {
           setUnread(n => n + 1)
+          playPop()
         })
         .subscribe()
 
