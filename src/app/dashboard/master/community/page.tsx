@@ -147,16 +147,17 @@ export default function CommunityPage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <div className="px-6 py-5 shrink-0" style={{ borderBottom: '1px solid var(--tf-border)' }}>
-          <div className="flex items-center gap-3">
-            <div>
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-3 mb-1">
               <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Community</h1>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--tf-subtle)' }}>Masters · Coach · Private room</p>
+              <div className="flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full"
+                style={{ background: 'rgba(74,222,128,.08)', border: '1px solid rgba(74,222,128,.2)', color: '#4ADE80' }}>
+                <span className="live-dot" />
+                Live
+              </div>
             </div>
-            <div className="ml-auto flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full"
-              style={{ background: 'rgba(74,222,128,.08)', border: '1px solid rgba(74,222,128,.2)', color: '#4ADE80' }}>
-              <span className="live-dot" />
-              Live
-            </div>
+            <p className="text-xs" style={{ color: 'var(--tf-subtle)' }}>Masters · Coach · Private room</p>
+            <div className="mt-3" style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 12px rgba(201,168,76,.45)' }} />
           </div>
         </div>
 

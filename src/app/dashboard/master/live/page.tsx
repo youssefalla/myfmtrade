@@ -224,13 +224,14 @@ export default function LivePage() {
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-5 shrink-0 flex items-center gap-4" style={{ borderBottom: '1px solid var(--tf-border)' }}>
-          <div className="flex-1">
+        <div className="px-6 py-5 shrink-0" style={{ borderBottom: '1px solid var(--tf-border)' }}>
+          <div className="text-center mb-3">
             <h1 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Live Sessions</h1>
-            <p className="text-xs mt-0.5" style={{ color: 'var(--tf-subtle)' }}>Coach live analysis · You get an email when it starts</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--tf-subtle)' }}>Coach live analysis · You get an email when it starts</p>
+            <div className="mt-3" style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 12px rgba(201,168,76,.45)' }} />
           </div>
           {isCoach && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2 mt-2">
               {myLiveSession ? (
                 <button onClick={endLive}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold"
@@ -244,7 +245,6 @@ export default function LivePage() {
               </button>
             </div>
           )}
-        </div>
 
         {/* Coach: schedule form */}
         {isCoach && showScheduleForm && (

@@ -53,11 +53,17 @@ export default function MasterSettingsPage() {
       <MasterSidebar profile={profile} onAvatarChange={url => setProfile(p => p ? { ...p, avatar_url: url } : p)} />
       <main className="flex-1 p-6 md:p-8 overflow-y-auto">
         <div className="max-w-xl mx-auto">
-          <h1 style={{ fontFamily: SYS, fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }} className="mb-8">Settings</h1>
+          <div className="text-center mb-8">
+            <h1 style={{ fontFamily: SYS, fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }}>Settings</h1>
+            <div className="mt-3" style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 12px rgba(201,168,76,.45)' }} />
+          </div>
 
           <div className="space-y-5">
             <div className="rounded-2xl p-6 tf-card-bg">
-              <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--tf-text)' }}>Display Name</h2>
+              <div className="text-center mb-4">
+                <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--tf-text)' }}>Display Name</h2>
+                <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 10px rgba(201,168,76,.4)' }} />
+              </div>
               <input value={name} onChange={e => setName(e.target.value)} className="w-full rounded-xl px-4 py-3 text-sm outline-none tf-input mb-4" />
               {saved && <p className="text-xs font-mono mb-3" style={{ color: '#4ADE80' }}>Saved.</p>}
               <button onClick={saveName} disabled={saving} className="btn-gold rounded-xl px-6 py-2.5 text-sm font-semibold">
@@ -66,7 +72,10 @@ export default function MasterSettingsPage() {
             </div>
 
             <div className="rounded-2xl p-6 tf-card-bg">
-              <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--tf-text)' }}>Account</h2>
+              <div className="text-center mb-3">
+                <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--tf-text)' }}>Account</h2>
+                <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 10px rgba(201,168,76,.4)' }} />
+              </div>
               <p className="text-xs mb-4" style={{ color: 'var(--tf-subtle)' }}>Signed in as Master Trader</p>
               <button onClick={signOut} disabled={signingOut}
                 className="rounded-xl px-6 py-2.5 text-sm font-semibold transition-all"

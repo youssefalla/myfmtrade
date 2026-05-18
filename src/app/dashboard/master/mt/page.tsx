@@ -48,6 +48,16 @@ interface Stats {
   account: { platform: string; server: string; login: string }
 }
 
+function SectionHeading({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <div className="text-center mb-4">
+      <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--tf-text)' }}>{title}</h2>
+      {sub && <p className="text-xs mb-2" style={{ color: 'var(--tf-subtle)' }}>{sub}</p>}
+      <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 10px rgba(201,168,76,.4)' }} />
+    </div>
+  )
+}
+
 function EquityCurve({ deals }: { deals: Deal[] }) {
   const closedDeals = deals
     .filter(d => d.entryType === 'DEAL_ENTRY_OUT' && d.symbol)
@@ -206,19 +216,20 @@ export default function MTDashboardPage() {
         <div className="max-w-5xl mx-auto">
 
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }}>MT Dashboard</h1>
-              <p className="mt-1 text-sm" style={{ color: 'var(--tf-subtle)' }}>Live connection to your MetaTrader account</p>
+          <div className="text-center mb-8">
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }}>MT Dashboard</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--tf-subtle)' }}>Live connection to your MetaTrader account</p>
+            <div className="mt-3 flex items-center justify-center gap-3">
+              {hasAccount && (
+                <button onClick={fetchStats} disabled={refreshing}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all"
+                  style={{ border: '1px solid var(--tf-border)', color: 'var(--tf-muted)', background: 'transparent' }}>
+                  <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                  {refreshing ? 'Refreshing…' : 'Refresh'}
+                </button>
+              )}
             </div>
-            {hasAccount && (
-              <button onClick={fetchStats} disabled={refreshing}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm transition-all"
-                style={{ border: '1px solid var(--tf-border)', color: 'var(--tf-muted)', background: 'transparent' }}>
-                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                {refreshing ? 'Refreshing…' : 'Refresh'}
-              </button>
-            )}
+            <div className="mt-3" style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 12px rgba(201,168,76,.45)' }} />
           </div>
 
           {/* NOT CONNECTED — show connect form */}
@@ -342,10 +353,7 @@ export default function MTDashboardPage() {
 
               {/* Equity Curve */}
               <div className="rounded-2xl p-6 tf-card-bg">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>Equity Curve — 30 Days</h2>
-                  <span className="text-xs font-mono" style={{ color: 'var(--tf-subtle)' }}>{closedDeals.length} trades</span>
-                </div>
+                <SectionHeading title={`Equity Curve — 30 Days`} sub={`${closedDeals.length} trades`} />
                 <div style={{ height: 120 }}>
                   <EquityCurve deals={stats.deals} />
                 </div>
@@ -354,7 +362,7 @@ export default function MTDashboardPage() {
               {/* Open Positions */}
               {stats.positions.length > 0 && (
                 <div className="rounded-2xl p-6 tf-card-bg">
-                  <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--tf-text)' }}>Open Positions</h2>
+                  <SectionHeading title="Open Positions" />
                   <div className="space-y-2">
                     {stats.positions.map(pos => (
                       <div key={pos.id} className="flex items-center gap-3 py-2.5 px-3 rounded-xl"
@@ -382,7 +390,7 @@ export default function MTDashboardPage() {
               {/* Recent Deals */}
               {closedDeals.length > 0 && (
                 <div className="rounded-2xl p-6 tf-card-bg">
-                  <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--tf-text)' }}>Last 30 Days — Closed Trades</h2>
+                  <SectionHeading title="Last 30 Days — Closed Trades" />
                   <div className="space-y-1">
                     {closedDeals.slice(-20).reverse().map((d, i) => (
                       <div key={d.id ?? i} className="flex items-center gap-3 py-2" style={{ borderBottom: '1px solid var(--tf-border)' }}>
