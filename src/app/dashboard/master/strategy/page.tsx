@@ -190,10 +190,15 @@ export default function StrategyPage() {
                   )}
                 </div>
               ) : (
-                <div className="rounded-2xl p-6 tf-card-bg h-full flex flex-col items-center justify-center text-center" style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)' }}>
+                <div className="rounded-2xl p-6 h-full flex flex-col items-center justify-center text-center"
+                  style={{
+                    background: 'linear-gradient(135deg, #E0C26A 0%, #C9A84C 40%, #B8943E 100%)',
+                    boxShadow: '0 0 40px rgba(201,168,76,.5), 0 0 80px rgba(201,168,76,.2), inset 0 1px 0 rgba(255,255,255,.25)',
+                    border: '1px solid rgba(255,255,255,.15)',
+                  }}>
                   <div className="text-3xl mb-3">🤖</div>
-                  <p className="text-xs font-semibold mb-1" style={{ color: 'var(--tf-text)' }}>No AI score yet</p>
-                  <p className="text-[11px]" style={{ color: 'var(--tf-subtle)' }}>Fill in your strategy and click "Score My Strategy" to get your AI analysis.</p>
+                  <p className="text-sm font-bold mb-2" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,.3)' }}>No AI score yet</p>
+                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,.75)' }}>Fill in your strategy and click "Score My Strategy" to get your AI analysis.</p>
                 </div>
               )}
             </div>
