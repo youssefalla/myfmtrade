@@ -10,21 +10,36 @@ import type { Profile } from '@/types/database'
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
 const COMMUNITY_HREF = '/dashboard/master/community'
 
+let _audioCtx: AudioContext | null = null
+function getAudioCtx(): AudioContext {
+  if (!_audioCtx) _audioCtx = new AudioContext()
+  return _audioCtx
+}
+// Unlock audio context on first user interaction
+if (typeof window !== 'undefined') {
+  const unlock = () => { try { getAudioCtx().resume() } catch {} }
+  window.addEventListener('click', unlock, { once: true })
+  window.addEventListener('keydown', unlock, { once: true })
+}
+
 function playPop() {
   try {
-    const ctx = new AudioContext()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, ctx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.12)
-    gain.gain.setValueAtTime(0.25, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.15)
-    osc.onended = () => ctx.close()
+    const ctx = getAudioCtx()
+    const trigger = () => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(880, ctx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.12)
+      gain.gain.setValueAtTime(0.25, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 0.15)
+    }
+    if (ctx.state === 'suspended') ctx.resume().then(trigger)
+    else trigger()
   } catch {}
 }
 
