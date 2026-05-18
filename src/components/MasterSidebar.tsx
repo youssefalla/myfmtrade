@@ -62,9 +62,19 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
         {navItems.map(({ icon: Icon, label, href }) => {
           const active = pathname === href
           return (
-            <Link key={label} href={href} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
-              style={{ background: active ? 'rgba(201,168,76,.12)' : 'transparent', color: active ? '#C9A84C' : 'var(--tf-muted)', border: active ? '1px solid rgba(201,168,76,.2)' : '1px solid transparent' }}>
-              <Icon size={16} strokeWidth={1.7} /><span>{label}</span>
+            <Link key={label} href={href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
+              style={{
+                background: active ? 'rgba(201,168,76,.08)' : 'transparent',
+                backdropFilter: active ? 'blur(12px)' : undefined,
+                WebkitBackdropFilter: active ? 'blur(12px)' : undefined,
+                color: active ? '#C9A84C' : 'var(--tf-muted)',
+                border: active ? '1px solid rgba(201,168,76,.18)' : '1px solid transparent',
+                boxShadow: active ? 'inset 0 1px 0 rgba(201,168,76,.12), inset 0 0 20px rgba(201,168,76,.04)' : undefined,
+              }}>
+              <Icon size={16} strokeWidth={1.7} />
+              <span className="flex-1">{label}</span>
+              {active && <div className="w-[3px] h-4 rounded-full" style={{ background: 'linear-gradient(180deg, #E0C26A, #C9A84C)' }} />}
             </Link>
           )
         })}
