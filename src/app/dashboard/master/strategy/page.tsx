@@ -75,7 +75,14 @@ export default function StrategyPage() {
     risk_management: '',
   })
 
-  const [aiResult, setAiResult] = useState<AIResult | null>(null)
+  // PREVIEW ONLY — remove after review
+  const [aiResult, setAiResult] = useState<AIResult | null>({
+    score: 8,
+    confirmation: 'BUY',
+    explanation: 'Strong SMC setup with clear BOS on H4 and confluence on M15 FVG. Risk management is well-defined.',
+    strengths: ['Clear market structure bias', 'Defined RR with structure SL'],
+    risks: ['Over-trading risk on M15', 'No news filter mentioned'],
+  })
   const [aiError, setAiError] = useState('')
   const [chartPair, setChartPair] = useState('XAUUSD')
 
