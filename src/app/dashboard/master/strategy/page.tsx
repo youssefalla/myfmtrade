@@ -193,7 +193,7 @@ export default function StrategyPage() {
                 <div className="rounded-2xl p-6 h-full flex flex-col items-center justify-center text-center"
                   style={{
                     background: 'linear-gradient(135deg, #E0C26A 0%, #C9A84C 40%, #B8943E 100%)',
-                    boxShadow: '0 0 40px rgba(201,168,76,.5), 0 0 80px rgba(201,168,76,.2), inset 0 1px 0 rgba(255,255,255,.25)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,.25)',
                     border: '1px solid rgba(255,255,255,.15)',
                   }}>
                   <div className="text-3xl mb-3">🤖</div>
