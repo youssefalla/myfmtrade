@@ -1,23 +1,23 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { LayoutDashboard, Eye, Users, TrendingUp, Banknote, Radio, Settings, Camera, Brain, Monitor, BookOpen, Video, BarChart2 } from 'lucide-react'
+import { TrendingUp, Settings, Camera, Brain, Monitor, Video, BarChart2, MessageCircle } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
+const COMMUNITY_HREF = '/dashboard/master/community'
 
 const navItems = [
-  { icon: Monitor,         label: 'MT Dashboard', href: '/dashboard/master/mt' },
-  { icon: BarChart2,       label: 'Live Chart',   href: '/dashboard/master/chart' },
-  { icon: Brain,           label: 'Strategy',     href: '/dashboard/master/strategy' },
-  { icon: Video,           label: 'Live',         href: '/dashboard/master/live' },
-  { icon: Radio,           label: 'Community',    href: '/dashboard/master/community' },
-  { icon: TrendingUp,      label: 'My Trades',    href: '/dashboard/master/trades' },
-  { icon: Settings,        label: 'Settings',     href: '/dashboard/master/settings' },
-  // hidden for now: Courses, Gig Profile, Followers, Earnings
+  { icon: Monitor,       label: 'MT Dashboard', href: '/dashboard/master/mt' },
+  { icon: BarChart2,     label: 'Live Chart',   href: '/dashboard/master/chart' },
+  { icon: Brain,         label: 'Strategy',     href: '/dashboard/master/strategy' },
+  { icon: Video,         label: 'Live',         href: '/dashboard/master/live' },
+  { icon: MessageCircle, label: 'Community',    href: COMMUNITY_HREF },
+  { icon: TrendingUp,    label: 'My Trades',    href: '/dashboard/master/trades' },
+  { icon: Settings,      label: 'Settings',     href: '/dashboard/master/settings' },
 ]
 
 interface Props {
@@ -29,7 +29,46 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
   const pathname = usePathname()
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [unread, setUnread] = useState(0)
   const initials = profile?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?'
+
+  // Reset unread when on community page, otherwise count new messages
+  useEffect(() => {
+    if (pathname === COMMUNITY_HREF) {
+      setUnread(0)
+      localStorage.setItem('community_last_seen', new Date().toISOString())
+      return
+    }
+
+    let cleanup: (() => void) | undefined
+
+    async function init() {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const lastSeen = localStorage.getItem('community_last_seen') ?? new Date(0).toISOString()
+
+      // Count messages since last visit
+      const { count } = await supabase
+        .from('community_messages')
+        .select('*', { count: 'exact', head: true })
+        .gt('created_at', lastSeen)
+
+      setUnread(count ?? 0)
+
+      // Subscribe to new messages
+      const channel = supabase
+        .channel('sidebar-community')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_messages' }, () => {
+          setUnread(n => n + 1)
+        })
+        .subscribe()
+
+      cleanup = () => { supabase.removeChannel(channel) }
+    }
+
+    init()
+    return () => { cleanup?.() }
+  }, [pathname])
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -64,6 +103,7 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map(({ icon: Icon, label, href }) => {
           const active = pathname === href
+          const isCommunity = href === COMMUNITY_HREF
           return (
             <Link key={label} href={href}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
@@ -75,7 +115,15 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
                 border: active ? '1px solid rgba(201,168,76,.22)' : '1px solid transparent',
                 boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,.08), inset 1px 0 0 rgba(255,255,255,.04)' : undefined,
               }}>
-              <Icon size={16} strokeWidth={1.7} />
+              <div className="relative shrink-0">
+                <Icon size={16} strokeWidth={1.7} />
+                {isCommunity && unread > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] rounded-full flex items-center justify-center text-[9px] font-bold"
+                    style={{ background: '#EF4444', color: '#fff', padding: '0 3px', lineHeight: 1 }}>
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </div>
               <span className="flex-1">{label}</span>
               {active && <div className="w-[3px] h-4 rounded-full" style={{ background: 'linear-gradient(180deg, #E0C26A, #C9A84C)' }} />}
             </Link>
