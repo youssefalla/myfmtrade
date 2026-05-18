@@ -52,7 +52,10 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
   }
 
   return (
-    <aside className="w-64 hidden md:flex flex-col p-6 gap-6 shrink-0 tf-sidebar">
+    <aside className="w-64 hidden md:flex flex-col p-6 gap-6 shrink-0 tf-sidebar" style={{
+      background: 'var(--tf-sidebar-bg)',
+      backgroundImage: 'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201,168,76,.13) 0%, transparent 70%), radial-gradient(ellipse 60% 30% at 50% 100%, rgba(201,168,76,.07) 0%, transparent 70%)',
+    }}>
       <Link href="/" className="flex items-center gap-2">
         <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14.5" stroke="#C9A84C" strokeWidth="1"/><path d="M22 9 A 11 11 0 1 0 22 23 A 8 8 0 1 1 22 9 Z" fill="#C9A84C"/><path d="M11 21 L21 11 M16 11 H21 V16" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         <span style={{ fontFamily: SYS, fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Trade<span style={{ color: '#C9A84C' }}>Flow</span></span>
