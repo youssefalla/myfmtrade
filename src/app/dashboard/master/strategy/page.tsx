@@ -128,7 +128,7 @@ export default function StrategyPage() {
           <div className="grid grid-cols-3 gap-4">
 
             {/* Single chart — spans 2 cols */}
-            <div className="rounded-2xl overflow-hidden tf-card-bg col-span-2">
+            <div className="rounded-2xl overflow-hidden tf-card-bg col-span-2" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
               <div className="flex items-center gap-2 px-4 pt-3 pb-0">
                 <span className="text-xs font-semibold flex-1" style={{ color: 'var(--tf-text)' }}>Live Chart</span>
                 <select value={chartPair} onChange={e => setChartPair(e.target.value)}
@@ -146,7 +146,7 @@ export default function StrategyPage() {
             {/* AI Score */}
             <div className="col-span-1">
               {aiResult ? (
-                <div className="rounded-2xl p-5 tf-card-bg h-full flex flex-col">
+                <div className="rounded-2xl p-5 tf-card-bg h-full flex flex-col" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xs font-semibold" style={{ color: 'var(--tf-text)' }}>AI Analysis</h2>
                     <span className="text-[10px] font-mono px-2.5 py-1 rounded-full"
@@ -190,7 +190,7 @@ export default function StrategyPage() {
                   )}
                 </div>
               ) : (
-                <div className="rounded-2xl p-6 tf-card-bg h-full flex flex-col items-center justify-center text-center">
+                <div className="rounded-2xl p-6 tf-card-bg h-full flex flex-col items-center justify-center text-center" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
                   <div className="text-3xl mb-3">🤖</div>
                   <p className="text-xs font-semibold mb-1" style={{ color: 'var(--tf-text)' }}>No AI score yet</p>
                   <p className="text-[11px]" style={{ color: 'var(--tf-subtle)' }}>Fill in your strategy and click "Score My Strategy" to get your AI analysis.</p>
@@ -201,7 +201,7 @@ export default function StrategyPage() {
 
           {/* ROW 2 — Trading Pairs + Trading Style */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-2xl p-5 tf-card-bg">
+            <div className="rounded-2xl p-5 tf-card-bg" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
               <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--tf-text)' }}>Trading Pairs</h2>
               <div className="flex flex-wrap gap-2">
                 {PAIRS.map(p => (
@@ -214,7 +214,7 @@ export default function StrategyPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl p-5 tf-card-bg">
+            <div className="rounded-2xl p-5 tf-card-bg" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
               <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--tf-text)' }}>Trading Style</h2>
               <div className="grid grid-cols-3 gap-2">
                 {['Scalping', 'Day Trading', 'Swing', 'SMC', 'Price Action', 'ICT'].map(s => (
@@ -229,7 +229,7 @@ export default function StrategyPage() {
           </div>
 
           {/* ROW 3 — Timeframes */}
-          <div className="rounded-2xl p-5 tf-card-bg">
+          <div className="rounded-2xl p-5 tf-card-bg" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
             <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--tf-text)' }}>Timeframes</h2>
             <div className="flex flex-wrap gap-2">
               {TIMEFRAMES.map(t => (
@@ -244,7 +244,7 @@ export default function StrategyPage() {
 
           {/* ROW 4 — Entry Rules + Risk Management */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-2xl p-5 tf-card-bg">
+            <div className="rounded-2xl p-5 tf-card-bg" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
               <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--tf-text)' }}>Entry Rules</h2>
               <p className="text-xs mb-3" style={{ color: 'var(--tf-subtle)' }}>Describe your setup: structure, confluence, triggers…</p>
               <textarea value={form.entry_rules}
@@ -253,7 +253,7 @@ export default function StrategyPage() {
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none resize-none tf-input" />
             </div>
 
-            <div className="rounded-2xl p-5 tf-card-bg">
+            <div className="rounded-2xl p-5 tf-card-bg" style={{ boxShadow: '0 0 0 1px rgba(201,168,76,.2), 0 0 30px rgba(201,168,76,.12)' }}>
               <h2 className="text-sm font-semibold mb-1" style={{ color: 'var(--tf-text)' }}>Risk Management</h2>
               <p className="text-xs mb-3" style={{ color: 'var(--tf-subtle)' }}>Define your risk rules and position sizing…</p>
               <textarea value={form.risk_management}
