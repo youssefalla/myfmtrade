@@ -58,22 +58,6 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
         <span style={{ fontFamily: SYS, fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Trade<span style={{ color: '#C9A84C' }}>Flow</span></span>
       </Link>
 
-      <div className="flex items-center gap-3">
-        <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-        <button type="button" onClick={() => avatarInputRef.current?.click()}
-          className="relative w-11 h-11 shrink-0 rounded-full overflow-hidden group"
-          style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)' }} title="Change photo">
-          {profile?.avatar_url
-            ? <img src={profile.avatar_url} alt={profile.full_name ?? ''} className="w-full h-full object-cover" />
-            : <span className="w-full h-full grid place-items-center font-bold text-base" style={{ color: '#1F2329', fontFamily: SYS }}>{initials}</span>
-          }
-          <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            {uploading ? <span className="text-white text-[10px] font-mono">…</span> : <Camera size={14} color="white" />}
-          </div>
-        </button>
-        <span className="text-sm font-semibold" style={{ color: 'var(--tf-text)', fontFamily: SYS }}>{profile?.full_name ?? '—'}</span>
-      </div>
-
       <nav className="flex flex-col gap-1 flex-1">
         {navItems.map(({ icon: Icon, label, href }) => {
           const active = pathname === href
@@ -86,7 +70,22 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
         })}
       </nav>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          <button type="button" onClick={() => avatarInputRef.current?.click()}
+            className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden group"
+            style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)' }} title="Change photo">
+            {profile?.avatar_url
+              ? <img src={profile.avatar_url} alt={profile.full_name ?? ''} className="w-full h-full object-cover" />
+              : <span className="w-full h-full grid place-items-center font-bold text-sm" style={{ color: '#1F2329', fontFamily: SYS }}>{initials}</span>
+            }
+            <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.5)' }}>
+              {uploading ? <span className="text-white text-[10px] font-mono">…</span> : <Camera size={13} color="white" />}
+            </div>
+          </button>
+          <span className="text-sm font-semibold" style={{ color: 'var(--tf-text)', fontFamily: SYS }}>{profile?.full_name ?? '—'}</span>
+        </div>
         <ThemeToggle />
       </div>
     </aside>
