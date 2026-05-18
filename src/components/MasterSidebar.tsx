@@ -58,22 +58,20 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
         <span style={{ fontFamily: SYS, fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.02em' }}>Trade<span style={{ color: '#C9A84C' }}>Flow</span></span>
       </Link>
 
-      <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.2)' }}>
+      <div className="flex items-center gap-3">
         <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
         <button type="button" onClick={() => avatarInputRef.current?.click()}
-          className="relative w-14 h-14 rounded-full mx-auto mb-3 block overflow-hidden group"
+          className="relative w-11 h-11 shrink-0 rounded-full overflow-hidden group"
           style={{ background: 'linear-gradient(135deg,#E0C26A,#C9A84C)' }} title="Change photo">
           {profile?.avatar_url
-            ? <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
-            : <span className="w-full h-full grid place-items-center font-bold text-xl" style={{ color: '#1F2329', fontFamily: SYS }}>{initials}</span>
+            ? <img src={profile.avatar_url} alt={profile.full_name ?? ''} className="w-full h-full object-cover" />
+            : <span className="w-full h-full grid place-items-center font-bold text-base" style={{ color: '#1F2329', fontFamily: SYS }}>{initials}</span>
           }
           <div className="absolute inset-0 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.5)' }}>
-            {uploading ? <span className="text-white text-[10px] font-mono">…</span> : <Camera size={16} color="white" />}
+            {uploading ? <span className="text-white text-[10px] font-mono">…</span> : <Camera size={14} color="white" />}
           </div>
         </button>
-        <div className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>{profile?.full_name ?? '—'}</div>
-        <div className="text-xs mt-0.5" style={{ color: '#C9A84C' }}>Master Trader ✓</div>
-        {profile?.city && <div className="text-xs mt-1" style={{ color: 'var(--tf-subtle)' }}>{profile.city}</div>}
+        <span className="text-sm font-semibold" style={{ color: 'var(--tf-text)', fontFamily: SYS }}>{profile?.full_name ?? '—'}</span>
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
