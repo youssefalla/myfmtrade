@@ -65,12 +65,11 @@ export function MasterSidebar({ profile, onAvatarChange }: Props) {
             <Link key={label} href={href}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
               style={{
-                background: active ? 'rgba(201,168,76,.08)' : 'transparent',
-                backdropFilter: active ? 'blur(12px)' : undefined,
-                WebkitBackdropFilter: active ? 'blur(12px)' : undefined,
+                background: active ? 'rgba(30,24,12,.55)' : 'transparent',
+                backdropFilter: active ? 'blur(16px)' : undefined,
+                WebkitBackdropFilter: active ? 'blur(16px)' : undefined,
                 color: active ? '#C9A84C' : 'var(--tf-muted)',
-                border: active ? '1px solid rgba(201,168,76,.18)' : '1px solid transparent',
-                boxShadow: active ? 'inset 0 1px 0 rgba(201,168,76,.12), inset 0 0 20px rgba(201,168,76,.04)' : undefined,
+                border: active ? '1px solid rgba(201,168,76,.22)' : '1px solid transparent',
               }}>
               <Icon size={16} strokeWidth={1.7} />
               <span className="flex-1">{label}</span>
