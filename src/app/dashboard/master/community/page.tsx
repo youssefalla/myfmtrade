@@ -184,7 +184,7 @@ export default function CommunityPage() {
           )}
           {messages.map((msg, i) => {
             const isMe = msg.user_id === userId
-            const isCoach = profile?.role === 'coach'
+            const isCoach = (profile?.role as string) === 'coach'
             const canDelete = isMe || isCoach
             const showAvatar = i === 0 || messages[i - 1].user_id !== msg.user_id
             const badge = roleBadge(msg.profiles?.role ?? null)
