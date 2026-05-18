@@ -33,8 +33,21 @@ export default function CommunityPage() {
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const [sendError, setSendError] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  async function deleteMessage(id: string) {
+    setDeletingId(id)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      await supabase.from('community_messages').delete().eq('id', id)
+      setMessages(prev => prev.filter(m => m.id !== id))
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -171,12 +184,14 @@ export default function CommunityPage() {
           )}
           {messages.map((msg, i) => {
             const isMe = msg.user_id === userId
+            const isCoach = profile?.role === 'coach'
+            const canDelete = isMe || isCoach
             const showAvatar = i === 0 || messages[i - 1].user_id !== msg.user_id
             const badge = roleBadge(msg.profiles?.role ?? null)
             const initials = msg.profiles?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?'
 
             return (
-              <div key={msg.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+              <div key={msg.id} className={`flex gap-3 group ${isMe ? 'flex-row-reverse' : ''}`}>
                 {/* Avatar */}
                 <div className="shrink-0 w-8 h-8">
                   {showAvatar ? (
@@ -203,15 +218,29 @@ export default function CommunityPage() {
                       <span className="text-[10px]" style={{ color: 'var(--tf-subtle)' }}>{timeLabel(msg.created_at)}</span>
                     </div>
                   )}
-                  <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
-                    style={{
-                      background: isMe ? 'rgba(201,168,76,.15)' : 'var(--tf-card-inner)',
-                      border: isMe ? '1px solid rgba(201,168,76,.25)' : '1px solid var(--tf-border)',
-                      color: 'var(--tf-text)',
-                      borderBottomRightRadius: isMe ? 4 : undefined,
-                      borderBottomLeftRadius: !isMe ? 4 : undefined,
-                    }}>
-                    {msg.content}
+                  <div className={`relative flex items-end gap-1.5 ${isMe ? 'flex-row-reverse' : ''}`}>
+                    <div className="px-4 py-2.5 rounded-2xl text-sm leading-relaxed"
+                      style={{
+                        background: isMe ? 'rgba(201,168,76,.15)' : 'var(--tf-card-inner)',
+                        border: isMe ? '1px solid rgba(201,168,76,.25)' : '1px solid var(--tf-border)',
+                        color: 'var(--tf-text)',
+                        borderBottomRightRadius: isMe ? 4 : undefined,
+                        borderBottomLeftRadius: !isMe ? 4 : undefined,
+                      }}>
+                      {msg.content}
+                    </div>
+                    {canDelete && (
+                      <button
+                        onClick={() => deleteMessage(msg.id)}
+                        disabled={deletingId === msg.id}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 w-6 h-6 rounded-full flex items-center justify-center"
+                        style={{ background: 'rgba(248,113,113,.15)', border: '1px solid rgba(248,113,113,.3)' }}
+                        title="Delete message">
+                        <span style={{ color: '#F87171', fontSize: 11, lineHeight: 1 }}>
+                          {deletingId === msg.id ? '…' : '✕'}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
