@@ -44,7 +44,17 @@ Be concise, specific, and actionable. For backtests, provide realistic estimated
     })
 
     const data = await res.json()
-    const content = data.choices?.[0]?.message?.content ?? 'Sorry, I could not generate a response.'
+
+    if (!res.ok || data.error) {
+      const errMsg = data.error?.message ?? data.error ?? `HTTP ${res.status}`
+      return NextResponse.json({ error: `Kimi API error: ${errMsg}` }, { status: 502 })
+    }
+
+    const content = data.choices?.[0]?.message?.content
+    if (!content) {
+      return NextResponse.json({ error: `Empty response from Kimi: ${JSON.stringify(data)}` }, { status: 502 })
+    }
+
     return NextResponse.json({ content })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
