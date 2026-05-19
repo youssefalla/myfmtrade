@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MasterSidebar } from '@/components/MasterSidebar'
+import { Send } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
@@ -9,22 +10,9 @@ const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
 const PAIRS = ['XAUUSD', 'EURUSD', 'GBPUSD', 'USDJPY', 'BTCUSD', 'ETHUSD', 'US30', 'NAS100', 'USOIL', 'XAGUSD']
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1']
 
-interface AIResult {
-  score: number
-  confirmation: string
-  explanation: string
-  strengths: string[]
-  risks: string[]
-}
-
-interface BacktestResult {
-  equity: number[]
-  trades: number
-  win_rate: number
-  profit_factor: number
-  max_drawdown: number
-  net_pnl: number
-  summary: string
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
 }
 
 interface HistoryEntry {
@@ -48,88 +36,16 @@ function SectionHeading({ title }: { title: string }) {
   )
 }
 
-function BacktestChart({ equity, color }: { equity: number[]; color: string }) {
-  const W = 480, H = 120, PAD = 14
-  const min = Math.min(...equity)
-  const max = Math.max(...equity)
-  const range = max - min || 1
-  const pts = equity.map((v, i) => ({
-    x: PAD + (i / (equity.length - 1)) * (W - PAD * 2),
-    y: H - PAD - ((v - min) / range) * (H - PAD * 2),
-  }))
-  let line = `M ${pts[0].x} ${pts[0].y}`
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i]
-    const cx = (a.x + b.x) / 2
-    line += ` C ${cx} ${a.y} ${cx} ${b.y} ${b.x} ${b.y}`
-  }
-  const fill = line + ` L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`
-  const uid = `bt${equity.length}`
-  return (
-    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <path d={fill} fill={`url(#${uid})`} />
-      <path d={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      {[0, 7, 14, 21, 29].map(i => pts[i] && (
-        <circle key={i} cx={pts[i].x} cy={pts[i].y} r="2.8" fill={color} stroke="rgba(0,0,0,.4)" strokeWidth="1.2" />
-      ))}
-    </svg>
-  )
-}
-
-function ScoreChart({ score, color }: { score: number; color: string }) {
-  const W = 280, H = 130, PAD = 18
-  const rel = [0.50, 0.42, 0.60, 0.53, 0.70, 0.82, 1.0]
-  const s = score / 10
-  const pts = rel.map((r, i) => ({
-    x: PAD + (i / (rel.length - 1)) * (W - PAD * 2),
-    y: H - PAD - r * s * (H - PAD * 1.5),
-  }))
-  let line = `M ${pts[0].x} ${pts[0].y}`
-  for (let i = 1; i < pts.length; i++) {
-    const a = pts[i - 1], b = pts[i]
-    const cx = (a.x + b.x) / 2
-    line += ` C ${cx} ${a.y} ${cx} ${b.y} ${b.x} ${b.y}`
-  }
-  const fill = line + ` L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`
-  const uid = `sg${score}`
-  return (
-    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block' }}>
-      <defs>
-        <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <path d={fill} fill={`url(#${uid})`} />
-      <path d={line} fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      {pts.map((pt, i) => (
-        <g key={i}>
-          <line x1={pt.x} y1={pt.y} x2={pt.x} y2={H - 4} stroke={color} strokeWidth="0.6" strokeOpacity="0.25" strokeDasharray="2 3" />
-          <circle cx={pt.x} cy={pt.y} r="3.2" fill={color} stroke="#0c1829" strokeWidth="1.5" />
-        </g>
-      ))}
-    </svg>
-  )
-}
-
-const confirmationColor: Record<string, string> = {
-  'STRONG BUY': '#4ADE80',
-  'BUY': '#86EFAC',
-  'NEUTRAL': '#C9A84C',
-  'SELL': '#FCA5A5',
-  'STRONG SELL': '#F87171',
-}
+const SUGGESTIONS = [
+  'Score and analyze my strategy',
+  'Simulate a backtest for last month',
+  'What are the biggest risks in my setup?',
+  'How can I improve my entries?',
+]
 
 export default function StrategyPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
-  const [scoring, setScoring] = useState(false)
   const [saved, setSaved] = useState(false)
 
   const [form, setForm] = useState({
@@ -140,14 +56,15 @@ export default function StrategyPage() {
     risk_management: '',
   })
 
-  const [aiResult, setAiResult] = useState<AIResult | null>(null)
-  const [aiError, setAiError] = useState('')
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
+  const [chatError, setChatError] = useState('')
+  const chatBottomRef = useRef<HTMLDivElement>(null)
+
   const [chartPair, setChartPair] = useState('XAUUSD')
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [backtest, setBacktest] = useState<BacktestResult | null>(null)
-  const [backtesting, setBacktesting] = useState(false)
-  const [backtestError, setBacktestError] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -173,69 +90,53 @@ export default function StrategyPage() {
           entry_rules: sRes.data.entry_rules ?? '',
           risk_management: sRes.data.risk_management ?? '',
         })
-        if (sRes.data.ai_score) {
-          setAiResult({
-            score: sRes.data.ai_score,
-            confirmation: sRes.data.ai_confirmation ?? 'NEUTRAL',
-            explanation: sRes.data.ai_explanation ?? '',
-            strengths: [],
-            risks: [],
-          })
-        }
       }
       setLoading(false)
     }
     load()
   }, [])
 
-  async function scoreStrategy() {
-    if (!form.entry_rules) { setAiError('Please fill in your entry rules first.'); return }
-    setScoring(true); setAiError(''); setSaved(false)
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages])
+
+  async function sendChat(text?: string) {
+    const content = (text ?? chatInput).trim()
+    if (!content || chatLoading) return
+    setChatInput('')
+    setChatError('')
+    const userMsg: ChatMessage = { role: 'user', content }
+    const updated = [...chatMessages, userMsg]
+    setChatMessages(updated)
+    setChatLoading(true)
     try {
-      const res = await fetch('/api/ai/score', {
+      const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ messages: updated, strategy: form }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      setAiResult(data)
-      setSaved(true)
-      setHistory(prev => [{
-        id: `new-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        ai_score: data.score,
-        ai_confirmation: data.confirmation,
-        ai_explanation: data.explanation,
-        ai_strengths: data.strengths ?? [],
-        ai_risks: data.risks ?? [],
-        style: form.style,
-        pairs: form.pairs,
-      }, ...prev])
+      setChatMessages(prev => [...prev, { role: 'assistant', content: data.content }])
     } catch (e) {
-      setAiError(e instanceof Error ? e.message : 'Something went wrong')
+      setChatError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
-      setScoring(false)
+      setChatLoading(false)
     }
   }
 
-  async function runBacktest() {
-    if (!form.entry_rules) { setBacktestError('Please fill in your entry rules first.'); return }
-    setBacktesting(true); setBacktestError('')
+  async function saveStrategy() {
+    if (!form.entry_rules) return
+    setSaved(false)
     try {
-      const res = await fetch('/api/ai/backtest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error)
-      setBacktest(data)
-    } catch (e) {
-      setBacktestError(e instanceof Error ? e.message : 'Something went wrong')
-    } finally {
-      setBacktesting(false)
-    }
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      await supabase.from('strategies').upsert({ master_id: user.id, ...form }, { onConflict: 'master_id' })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch {}
   }
 
   function togglePair(p: string) {
@@ -246,8 +147,6 @@ export default function StrategyPage() {
   }
 
   if (loading) return <div className="min-h-screen flex items-center justify-center tf-page"><div className="text-sm font-mono" style={{ color: 'var(--tf-subtle)' }}>Loading…</div></div>
-
-  const scoreColor = aiResult ? (aiResult.score >= 8 ? '#4ADE80' : aiResult.score >= 6 ? '#C9A84C' : '#F87171') : '#C9A84C'
 
   return (
     <div className="h-screen flex overflow-hidden tf-page" style={{ fontFamily: SYS }}>
@@ -287,76 +186,95 @@ export default function StrategyPage() {
                 allowTransparency allowFullScreen />
             </div>
 
-            {/* AI Score */}
-            <div className="col-span-1">
-              {aiResult ? (
-                <div className="rounded-2xl p-5 h-full flex flex-col"
-                  style={{
-                    background: 'linear-gradient(160deg, #E0C26A 0%, #C9A84C 45%, #B8943E 100%)',
-                    border: '1px solid rgba(255,255,255,.18)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,.25)',
-                  }}>
+            {/* AI Chat */}
+            <div className="col-span-1 rounded-2xl flex flex-col overflow-hidden tf-card-bg"
+              style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)', height: '100%' }}>
 
-                  {/* Header */}
-                  <div className="text-center mb-3">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <span className="text-sm font-bold" style={{ color: '#1a1200' }}>AI Analysis</span>
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-                        style={{ background: 'rgba(0,0,0,.18)', color: '#fff' }}>
-                        {aiResult.confirmation}
-                      </span>
-                    </div>
-                    <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(0,0,0,.2) 50%, transparent)' }} />
+              {/* Chat header */}
+              <div className="px-4 pt-4 pb-3 shrink-0">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <span className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>AI Trading Assistant</span>
+                  <div className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(74,222,128,.08)', border: '1px solid rgba(74,222,128,.2)', color: '#4ADE80' }}>
+                    <span className="live-dot" />Kimi
                   </div>
+                </div>
+                <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 10px rgba(201,168,76,.4)' }} />
+              </div>
 
-                  {/* Score chart */}
-                  <div className="relative rounded-xl overflow-hidden mb-3" style={{ background: 'rgba(0,0,0,.22)' }}>
-                    <ScoreChart score={aiResult.score} color="#fff" />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span style={{ fontSize: '2.6rem', fontWeight: 800, color: '#fff', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,.3)' }}>{Math.round(Number(aiResult.score) * 10)}%</span>
-                      <span className="text-[10px] mt-1 font-mono" style={{ color: 'rgba(255,255,255,.6)' }}>Strategy Score</span>
-                    </div>
-                  </div>
-
-                  {/* Explanation */}
-                  <p className="text-xs leading-relaxed mb-3 text-center" style={{ color: 'rgba(0,0,0,.65)' }}>{aiResult.explanation}</p>
-
-                  {/* Strengths */}
-                  {aiResult.strengths?.length > 0 && (
-                    <div className="rounded-xl p-3 mb-2" style={{ background: 'rgba(0,0,0,.15)', border: '1px solid rgba(255,255,255,.15)' }}>
-                      <div className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#1a1200' }}>Strengths</div>
-                      {aiResult.strengths.slice(0, 2).map((s, i) => (
-                        <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: '#fff' }}>
-                          <span style={{ color: '#4ADE80' }}>✓</span>{s}
-                        </div>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2 min-h-0">
+                {chatMessages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center gap-3 py-4">
+                    <div className="text-2xl">🤖</div>
+                    <p className="text-[11px] text-center leading-relaxed" style={{ color: 'var(--tf-subtle)' }}>
+                      Ask me anything about your strategy, chart analysis, or backtest.
+                    </p>
+                    <div className="w-full space-y-1.5 mt-1">
+                      {SUGGESTIONS.map(s => (
+                        <button key={s} onClick={() => sendChat(s)}
+                          className="w-full text-left rounded-xl px-3 py-2 text-[11px] transition-all hover:opacity-90"
+                          style={{ background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.18)', color: 'var(--tf-muted)' }}>
+                          {s}
+                        </button>
                       ))}
                     </div>
-                  )}
-
-                  {/* Risks */}
-                  {aiResult.risks?.length > 0 && (
-                    <div className="rounded-xl p-3" style={{ background: 'rgba(0,0,0,.15)', border: '1px solid rgba(255,255,255,.15)' }}>
-                      <div className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#1a1200' }}>Risks</div>
-                      {aiResult.risks.slice(0, 2).map((r, i) => (
-                        <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: '#fff' }}>
-                          <span style={{ color: '#FECACA' }}>⚠</span>{r}
-                        </div>
-                      ))}
+                  </div>
+                ) : (
+                  chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className="max-w-[88%] rounded-2xl px-3 py-2 text-[11px] leading-relaxed"
+                        style={msg.role === 'user' ? {
+                          background: 'rgba(201,168,76,.15)',
+                          border: '1px solid rgba(201,168,76,.25)',
+                          color: 'var(--tf-text)',
+                          borderBottomRightRadius: 4,
+                        } : {
+                          background: 'var(--tf-card-inner)',
+                          border: '1px solid var(--tf-border)',
+                          color: 'var(--tf-muted)',
+                          borderBottomLeftRadius: 4,
+                          whiteSpace: 'pre-wrap',
+                        }}>
+                        {msg.content}
+                      </div>
                     </div>
-                  )}
+                  ))
+                )}
+                {chatLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-2xl px-3 py-2 text-[11px]"
+                      style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)', color: 'var(--tf-subtle)', borderBottomLeftRadius: 4 }}>
+                      <span className="animate-pulse">Thinking…</span>
+                    </div>
+                  </div>
+                )}
+                {chatError && (
+                  <p className="text-[10px] text-center font-mono" style={{ color: '#F87171' }}>{chatError}</p>
+                )}
+                <div ref={chatBottomRef} />
+              </div>
+
+              {/* Chat input */}
+              <div className="px-3 pb-3 pt-2 shrink-0" style={{ borderTop: '1px solid var(--tf-border)' }}>
+                <div className="flex gap-2 items-center">
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
+                    placeholder="Ask about chart, backtest…"
+                    className="flex-1 rounded-xl px-3 py-2 text-[11px] outline-none tf-input"
+                  />
+                  <button onClick={() => sendChat()} disabled={!chatInput.trim() || chatLoading}
+                    className="w-8 h-8 rounded-xl grid place-items-center shrink-0 transition-all"
+                    style={{
+                      background: chatInput.trim() ? 'linear-gradient(135deg,#E0C26A,#C9A84C)' : 'var(--tf-card-inner)',
+                      border: '1px solid var(--tf-border)',
+                    }}>
+                    <Send size={12} color={chatInput.trim() ? '#1F2329' : 'var(--tf-muted)'} />
+                  </button>
                 </div>
-              ) : (
-                <div className="rounded-2xl p-6 h-full flex flex-col items-center justify-center text-center"
-                  style={{
-                    background: 'linear-gradient(135deg, #E0C26A 0%, #C9A84C 40%, #B8943E 100%)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,.25)',
-                    border: '1px solid rgba(255,255,255,.15)',
-                  }}>
-                  <div className="text-3xl mb-3">🤖</div>
-                  <p className="text-sm font-bold mb-2" style={{ color: '#fff', textShadow: '0 1px 8px rgba(0,0,0,.3)' }}>No AI score yet</p>
-                  <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,.75)' }}>Fill in your strategy and click "Score My Strategy" to get your AI analysis.</p>
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -424,95 +342,13 @@ export default function StrategyPage() {
             </div>
           </div>
 
-          {/* ROW 5 — Buttons */}
-          {aiError && <p className="text-xs font-mono text-center" style={{ color: '#F87171' }}>{aiError}</p>}
-          {saved && <p className="text-xs font-mono text-center" style={{ color: '#4ADE80' }}>✓ Strategy scored and saved.</p>}
+          {/* ROW 5 — Save */}
+          {saved && <p className="text-xs font-mono text-center" style={{ color: '#4ADE80' }}>✓ Strategy saved.</p>}
 
-          <div className="grid grid-cols-2 gap-3 tf-fade-in" style={{ animationDelay: '0.5s' }}>
-            <button onClick={scoreStrategy} disabled={scoring}
-              className="btn-gold rounded-xl py-4 text-sm font-semibold w-full">
-              {scoring ? 'AI is analyzing…' : '🤖 Score My Strategy'}
-            </button>
-            <button onClick={runBacktest} disabled={backtesting}
-              className="rounded-xl py-4 text-sm font-semibold w-full transition-all"
-              style={{
-                background: backtesting ? 'var(--tf-card-inner)' : 'rgba(74,222,128,.1)',
-                border: '1px solid rgba(74,222,128,.3)',
-                color: backtesting ? 'var(--tf-muted)' : '#4ADE80',
-              }}>
-              {backtesting ? 'Running backtest…' : '📊 Run AI Backtest (1M)'}
-            </button>
-          </div>
-
-          {/* Backtest Results */}
-          {backtestError && <p className="text-xs font-mono text-center" style={{ color: '#F87171' }}>{backtestError}</p>}
-          {backtest && (
-            <div className="rounded-2xl overflow-hidden tf-card-bg tf-fade-in" style={{ animationDelay: '0s', boxShadow: 'inset 0 1px 80px rgba(74,222,128,.04), 0 0 0 1px rgba(74,222,128,.18)' }}>
-              {/* Header */}
-              <div className="px-5 pt-5 pb-0">
-                <div className="text-center mb-3">
-                  <div className="flex items-center justify-center gap-3 mb-2">
-                    <h2 className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>AI Backtest — Last 30 Days</h2>
-                    <span className="text-[10px] font-mono px-2.5 py-1 rounded-full font-bold"
-                      style={{
-                        background: backtest.net_pnl >= 0 ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.12)',
-                        color: backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171',
-                        border: `1px solid ${backtest.net_pnl >= 0 ? 'rgba(74,222,128,.25)' : 'rgba(248,113,113,.25)'}`,
-                      }}>
-                      {backtest.net_pnl >= 0 ? '+' : ''}{backtest.net_pnl.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171'} 50%, transparent)`, opacity: 0.4 }} />
-                </div>
-              </div>
-
-              {/* Equity Chart */}
-              {backtest.equity?.length > 1 && (
-                <div className="px-4 py-2">
-                  <div className="relative rounded-xl overflow-hidden" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
-                    <div className="absolute top-2 left-3 text-[10px] font-mono" style={{ color: 'var(--tf-subtle)' }}>
-                      ${backtest.equity[0]?.toLocaleString()}
-                    </div>
-                    <div className="absolute top-2 right-3 text-[10px] font-mono font-bold"
-                      style={{ color: backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171' }}>
-                      ${backtest.equity[backtest.equity.length - 1]?.toLocaleString()}
-                    </div>
-                    <div className="pt-6 pb-1">
-                      <BacktestChart equity={backtest.equity} color={backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171'} />
-                    </div>
-                    <div className="flex justify-between px-3 pb-2">
-                      {['Day 1', 'Week 1', 'Week 2', 'Week 3', 'Day 30'].map(l => (
-                        <span key={l} className="text-[9px] font-mono" style={{ color: 'var(--tf-subtle)' }}>{l}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Stats Grid */}
-              <div className="px-5 pb-4 pt-2">
-                <div className="grid grid-cols-4 gap-3 mb-3">
-                  {[
-                    { label: 'Total Trades', value: String(backtest.trades) },
-                    { label: 'Win Rate', value: `${backtest.win_rate?.toFixed(1)}%` },
-                    { label: 'Profit Factor', value: backtest.profit_factor?.toFixed(2), good: backtest.profit_factor >= 1 },
-                    { label: 'Max Drawdown', value: `-${backtest.max_drawdown?.toFixed(1)}%`, bad: true },
-                  ].map(({ label, value, good, bad }) => (
-                    <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
-                      <div className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--tf-subtle)' }}>{label}</div>
-                      <div className="text-sm font-bold"
-                        style={{ color: bad ? '#F87171' : good ? '#4ADE80' : 'var(--tf-text)' }}>
-                        {value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {backtest.summary && (
-                  <p className="text-xs leading-relaxed text-center" style={{ color: 'var(--tf-muted)' }}>{backtest.summary}</p>
-                )}
-              </div>
-            </div>
-          )}
+          <button onClick={saveStrategy} disabled={!form.entry_rules}
+            className="btn-gold rounded-xl py-4 text-sm font-semibold w-full tf-fade-in" style={{ animationDelay: '0.5s' }}>
+            Save Strategy
+          </button>
 
           {/* Strategy History */}
           {history.length > 0 && (
