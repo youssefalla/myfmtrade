@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "TradeFlow · Trading Automation & Peace of Mind",
-  description: "Morocco's AI-powered trading platform. Build your strategy with AI, get scored, and receive live market alerts.",
+  description: "Morocco's first social copy-trading platform. Follow verified top traders and automate your portfolio with MT5.",
 };
 
 export default function RootLayout({
@@ -33,12 +33,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
+      className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} dark`}
       suppressHydrationWarning
     >
       <head>
-        {/* Restore saved theme — default is light */}
-        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('tf-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}` }} />
+        {/* Prevents flash on theme switch — runs before React hydration */}
+        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('tf-theme');if(t==='light')document.documentElement.classList.remove('dark');}catch(e){}` }} />
       </head>
       <body className="antialiased min-h-full flex flex-col">{children}</body>
     </html>

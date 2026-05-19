@@ -28,7 +28,7 @@ export default function LoginPage() {
       .single()
 
     const role = profile?.role ?? authData.user.user_metadata?.role
-    window.location.href = '/dashboard/master'
+    window.location.href = role === 'master' ? '/dashboard/master' : '/dashboard/copy'
   }
 
   return (

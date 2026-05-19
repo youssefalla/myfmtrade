@@ -190,7 +190,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-2 ml-auto md:ml-0">
             <ThemeToggle size={10} />
-            <Link href="/signup" className="btn-outline rounded-full px-4 py-2.5 text-sm font-medium tracking-tight hidden sm:inline-flex items-center gap-1.5">
+            <Link href="/masters" className="btn-outline rounded-full px-4 py-2.5 text-sm font-medium tracking-tight hidden sm:inline-flex items-center gap-1.5">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               Become a Master
             </Link>
@@ -220,21 +220,21 @@ export default function LandingPage() {
             </div>
             <h1 className="blur-headline mt-6 leading-[1.04] tracking-tight font-bold" data-blur
                 style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(2.5rem,5.6vw,4.75rem)', letterSpacing: '-0.02em', color: 'var(--tf-text)' }}>
-              Build your edge.<br/>
-              Trade with precision.<br/>
-              <em className="gold-shimmer not-italic">Powered by AI.</em>
+              Copy the best<br/>
+              traders in Morocco.<br/>
+              <em className="gold-shimmer not-italic">Automatically.</em>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed" style={{ color: 'var(--tf-muted)' }}>
-              TradeFlow gives master traders an AI strategy coach, live market alerts, and performance analytics — all in one platform.
+              Join thousands of traders who grow their portfolio by following verified top performers — in one click.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/signup" className="btn-gold rounded-full px-6 py-3.5 text-sm font-semibold tracking-tight">Start for Free</Link>
-              <a href="#features" className="btn-outline rounded-full px-6 py-3.5 text-sm font-medium tracking-tight inline-flex items-center gap-2">Explore Features</a>
+              <a href="#traders" className="btn-outline rounded-full px-6 py-3.5 text-sm font-medium tracking-tight inline-flex items-center gap-2">Browse Traders</a>
             </div>
             <div className="mt-10 flex items-center gap-4 text-xs font-mono" style={{ color: 'var(--tf-muted)' }}>
               <span>NO CARD REQUIRED</span><span className="w-1 h-1 rounded-full bg-current opacity-40"></span>
-              <span>AI STRATEGY BUILDER</span><span className="w-1 h-1 rounded-full bg-current opacity-40"></span>
-              <span>LIVE MARKET ALERTS</span>
+              <span>MT5 EXECUTION</span><span className="w-1 h-1 rounded-full bg-current opacity-40"></span>
+              <span>VERIFIED TRADERS</span>
             </div>
           </div>
 
@@ -306,8 +306,8 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="tc-divider"></div>
-              <Link href="/signup" className="tc-cta mt-4">
-                <span>Get Started</span><span className="tc-arrow">→</span>
+              <Link href="/signup?role=trader" className="tc-cta mt-4">
+                <span>Copy Trader</span><span className="tc-arrow">→</span>
               </Link>
             </div>
           </div>
@@ -325,7 +325,7 @@ export default function LandingPage() {
             {[
               { label: 'Community', value: '600K+', sub: 'Active members', icon: '●' },
               { label: 'Master Traders', value: '150+', sub: 'All verified · KYC checked', icon: '★' },
-              { label: 'Strategies Built', value: '2,400+', sub: 'AI-assisted · Last 12 months', icon: '↑' },
+              { label: 'Copied Volume', value: '$2.4M+', sub: 'MT5 · Last 12 months', icon: '↑' },
             ].map(({ label, value, sub }) => (
               <div key={label} className="stat-card reveal">
                 <span className="glow"></span>
@@ -366,27 +366,27 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-6 gap-5">
 
-          {/* 01 — AI Strategy Builder — large hero card */}
+          {/* 01 — Auto Copy Trading — large hero card */}
           <div className="bento rounded-2xl p-8 md:col-span-4 relative overflow-hidden reveal">
             <div className="absolute top-6 right-6 text-[11px] font-mono tracking-widest" style={{ color: 'var(--tf-subtle)' }}>01</div>
-            <div className="text-xs tracking-[0.2em] uppercase font-mono mb-4" style={{ color: '#C9A84C' }}>↗ AI Strategy Builder</div>
-            <h3 style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(1.5rem,3vw,2.25rem)', fontWeight: 700, lineHeight: 1.1 }}>Build your complete<br/>strategy in 5 steps.</h3>
-            <p className="mt-3 text-sm leading-relaxed max-w-sm" style={{ color: 'var(--tf-muted)' }}>AI guides you through pairs, timeframes, style, entry rules, and risk management — with live market data injected in real time.</p>
+            <div className="text-xs tracking-[0.2em] uppercase font-mono mb-4" style={{ color: '#C9A84C' }}>↗ Auto Copy Trading</div>
+            <h3 style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(1.5rem,3vw,2.25rem)', fontWeight: 700, lineHeight: 1.1 }}>Mirror every trade,<br/>the instant it opens.</h3>
+            <p className="mt-3 text-sm leading-relaxed max-w-sm" style={{ color: 'var(--tf-muted)' }}>MT5-powered, real-time execution. Sized to your balance, capped to your risk. Zero delay.</p>
 
-            {/* Strategy mockup UI */}
+            {/* Live trade mockup UI */}
             <div className="mt-7 rounded-2xl p-5 relative overflow-hidden" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#C9A84C' }}/>
-                  <span className="text-[11px] font-mono uppercase tracking-widest" style={{ color: '#C9A84C' }}>AI Strategy · Live Data</span>
+                  <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#22C55E' }}/>
+                  <span className="text-[11px] font-mono uppercase tracking-widest" style={{ color: '#22C55E' }}>Live Copy · MT5</span>
                 </div>
-                <span className="text-[11px] font-mono" style={{ color: 'var(--tf-subtle)' }}>XAUUSD · H4</span>
+                <span className="text-[11px] font-mono" style={{ color: 'var(--tf-subtle)' }}>Youssef El Amrani</span>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Style', value: 'SMC', sub: 'Smart Money' },
-                  { label: 'AI Score', value: '87/100', sub: 'Excellent' },
-                  { label: 'Risk/Reward', value: '1:2.5', sub: 'Per trade' },
+                  { label: 'Symbol', value: 'XAUUSD', sub: 'Gold' },
+                  { label: 'Entry', value: '2,341.50', sub: 'Buy' },
+                  { label: 'Your size', value: '0.02 lot', sub: 'Auto-scaled' },
                 ].map(({ label, value, sub }) => (
                   <div key={label} className="rounded-xl p-3" style={{ background: 'var(--tf-page)', border: '1px solid var(--tf-border)' }}>
                     <div className="text-[10px] font-mono uppercase tracking-wider mb-1" style={{ color: 'var(--tf-subtle)' }}>{label}</div>
@@ -397,10 +397,10 @@ export default function LandingPage() {
               </div>
               <div className="mt-4">
                 <div className="flex justify-between text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: 'var(--tf-subtle)' }}>
-                  <span>Strategy strength</span><span style={{ color: '#C9A84C' }}>87%</span>
+                  <span>Copy ratio</span><span style={{ color: '#C9A84C' }}>78%</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--tf-border)' }}>
-                  <div className="h-full rounded-full" style={{ width: '87%', background: 'linear-gradient(90deg,#C9A84C,#E0C26A)' }}/>
+                  <div className="h-full rounded-full" style={{ width: '78%', background: 'linear-gradient(90deg,#C9A84C,#E0C26A)' }}/>
                 </div>
               </div>
             </div>
@@ -440,7 +440,7 @@ export default function LandingPage() {
               <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: '#22C55E' }}>3 rooms live now</span>
             </div>
             <h3 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem' }}>Live Communities</h3>
-            <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--tf-muted)' }}>Setups, voice rooms, and post-trade breakdowns from Morocco's best traders.</p>
+            <p className="mt-1.5 text-sm leading-relaxed" style={{ color: 'var(--tf-muted)' }}>Setups, voice rooms, post-trade breakdowns from the traders you copy.</p>
           </div>
 
           {/* 03 — Real-time Analytics */}
@@ -505,7 +505,7 @@ export default function LandingPage() {
               ))}
             </div>
             <h3 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.15rem', fontWeight: 700, marginTop: '1.25rem' }}>Courses & Learning</h3>
-            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--tf-muted)' }}>Masterclasses from top traders. Darija, French, English.</p>
+            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--tf-muted)' }}>Masterclasses from the traders you copy. Darija, French, English.</p>
           </div>
 
           {/* 05 — Rebate System */}
@@ -527,7 +527,7 @@ export default function LandingPage() {
               </div>
             </div>
             <h3 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.15rem', fontWeight: 700, marginTop: '1rem' }}>Rebate System</h3>
-            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--tf-muted)' }}>Earn cashback on every trade you make. Paid weekly, automatically.</p>
+            <p className="mt-1 text-sm leading-relaxed" style={{ color: 'var(--tf-muted)' }}>Earn cashback on every trade you copy. Paid weekly, automatically.</p>
           </div>
 
           {/* 06 — Web · Mobile · Tablet — full width */}
@@ -664,14 +664,14 @@ export default function LandingPage() {
                       <div style={{ fontFamily: 'var(--font-syne)', fontSize: '1.1rem', color: 'var(--tf-text)', marginTop: '0.25rem' }}>{followers}</div>
                     </div>
                   </div>
-                  <Link href="/signup" className={`rounded-full px-5 py-3 text-sm font-semibold tracking-tight text-center mt-5 ${featured ? 'btn-gold' : 'btn-outline'}`}>Get Started</Link>
+                  <Link href="/signup?role=trader" className={`rounded-full px-5 py-3 text-sm font-semibold tracking-tight text-center mt-5 ${featured ? 'btn-gold' : 'btn-outline'}`}>Copy Trader</Link>
                 </div>
               </div>
             )})}
           </div>
 
           <div className="text-center mt-12 reveal">
-            <Link href="/signup" className="text-sm font-mono hover:underline underline-offset-4" style={{ color: 'rgba(201,168,76,.8)' }}>Join as a master trader →</Link>
+            <Link href="/marketplace" className="text-sm font-mono hover:underline underline-offset-4" style={{ color: 'rgba(201,168,76,.8)' }}>Browse all 150+ master traders →</Link>
           </div>
         </div>
       </section>
@@ -681,15 +681,15 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 py-28">
           <div className="text-center max-w-2xl mx-auto reveal">
             <div className="text-xs tracking-[0.22em] uppercase font-mono" style={{ color: '#C9A84C' }}>↗ How it works</div>
-            <h2 className="blur-headline mt-3 leading-none" data-blur style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700 }}>From sign-up to<br/>strategy in minutes.</h2>
-            <p className="mt-5 leading-relaxed" style={{ color: 'var(--tf-muted)' }}>No code. No guesswork. Your AI strategy coach does 90% of the work.</p>
+            <h2 className="blur-headline mt-3 leading-none" data-blur style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700 }}>Start copying<br/>in three steps.</h2>
+            <p className="mt-5 leading-relaxed" style={{ color: 'var(--tf-muted)' }}>No code. No callbacks. Less than nine minutes from sign-up to first copy.</p>
           </div>
           <ol className="mt-20 relative stagger">
             <span className="absolute left-[27px] top-2 bottom-2 w-px" style={{ background: 'linear-gradient(180deg, transparent, rgba(201,168,76,.4), transparent)' }}></span>
             {[
-              { n:'01', title:'Create your account.', desc:'Sign up as a master trader. Complete your profile. Access your full dashboard in under two minutes.', time:'~ 2 minutes' },
-              { n:'02', title:'Build your AI strategy.', desc:'Chat with the AI coach to define your pairs, timeframes, style, and entry rules. It proposes your full ruleset — you approve and refine.', time:'~ 5 minutes' },
-              { n:'03', title:'Get scored & alerted.', desc:'Your strategy gets an AI score. Set live market alerts — the platform watches the markets 24/7 and emails you when your conditions are met.', time:'~ 2 minutes' },
+              { n:'01', title:'Create your account.', desc:'Sign up with email or phone. Verify your identity. Connect MT5 in two clicks — read-trade scopes only, never withdraw.', time:'~ 2 minutes' },
+              { n:'02', title:'Browse & follow traders.', desc:'Filter by ROI, win rate, drawdown, asset class. Read their thesis. Watch their last 20 trades. Pick the ones whose style fits yours.', time:'~ 4 minutes' },
+              { n:'03', title:'Auto-copy their trades.', desc:'Set your copy ratio and risk caps. The moment they open a position, your account mirrors it — sized to your balance, capped to your rules.', time:'~ 3 minutes' },
             ].map(({ n, title, desc, time }) => (
               <li key={n} className="relative pl-20 pb-14 last:pb-0 reveal">
                 <div className="step-dot absolute left-0 top-0 w-14 h-14 rounded-full grid place-items-center" style={{ fontFamily: 'var(--font-syne)', fontSize: '1.5rem', color: '#C9A84C' }}>{n}</div>
@@ -716,11 +716,11 @@ export default function LandingPage() {
           <div className="mt-16 grid md:grid-cols-3 gap-6 items-stretch stagger">
             {[
               { name:'Free', price:'0', unit:'MAD', sub:'Forever · no card needed', featured:false, cta:'Start Free', href:'/signup',
-                features:['AI strategy builder','Basic analytics','Live market monitoring','Email alerts'] },
+                features:['Follow 1 trader','Basic analytics','MT5 auto-copy execution','Email support'] },
               { name:'Pro', price:'99', unit:'MAD/mo', sub:'Billed monthly · cancel anytime', featured:true, cta:'Go Pro', href:'/signup?plan=pro',
-                features:['Unlimited strategies','Full real-time analytics','Community access · voice rooms','Free course library','Priority chat support'] },
+                features:['Follow up to 5 traders','Full real-time analytics','Community access · voice rooms','Free course library','Priority chat support'] },
               { name:'Elite', price:'249', unit:'MAD/mo', sub:'For full-time traders', featured:false, cta:'Go Elite', href:'/signup?plan=elite',
-                features:['Everything in Pro','Exclusive paid courses','Advanced AI backtesting','24/7 priority support','Early access to new features'] },
+                features:['Unlimited traders','Exclusive paid courses','Higher rebate tier','24/7 priority support','Early access to new traders'] },
             ].map(({ name, price, unit, sub, featured, cta, href, features }) => (
               <div key={name} className={`price-card rounded-2xl p-7 flex flex-col relative ${featured ? 'featured' : ''}`}>
                 {featured && <div className="absolute -top-3 left-1/2 -translate-x-1/2 btn-gold text-[11px] tracking-[0.18em] uppercase font-semibold rounded-full px-3 py-1">★ Most Popular</div>}
@@ -796,11 +796,11 @@ export default function LandingPage() {
           </svg>
           <div className="relative max-w-3xl">
             <div className="text-xs tracking-[0.22em] uppercase font-mono" style={{ color: '#C9A84C' }}>↗ Yallah</div>
-            <h2 className="blur-headline mt-4 leading-none" data-blur style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700 }}>Stop guessing.<br/><span className="gold-shimmer">Start trading with edge.</span></h2>
-            <p className="mt-6 max-w-xl" style={{ color: 'rgba(240,237,232,.75)' }}>Free forever. No card. Build your strategy with AI, get scored, and receive live market alerts.</p>
+            <h2 className="blur-headline mt-4 leading-none" data-blur style={{ fontFamily: 'var(--font-syne)', fontSize: 'clamp(2rem,5vw,3.5rem)', fontWeight: 700 }}>Stop guessing.<br/><span className="gold-shimmer">Start copying.</span></h2>
+            <p className="mt-6 max-w-xl" style={{ color: 'rgba(240,237,232,.75)' }}>Free forever. No card. Pick a trader, set your ratio, and let the pros do what they do best.</p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link href="/signup" className="btn-gold rounded-full px-7 py-3.5 text-sm font-semibold tracking-tight">Create Free Account</Link>
-              <a href="#features" className="rounded-full px-7 py-3.5 text-sm font-medium tracking-tight border transition-colors" style={{ borderColor: 'rgba(240,237,232,.2)', color: 'rgba(240,237,232,.8)' }}>Explore Features</a>
+              <Link href="/marketplace" className="rounded-full px-7 py-3.5 text-sm font-medium tracking-tight border transition-colors" style={{ borderColor: 'rgba(240,237,232,.2)', color: 'rgba(240,237,232,.8)' }}>Browse Traders</Link>
             </div>
           </div>
         </div>
@@ -817,14 +817,14 @@ export default function LandingPage() {
                   <path d="M22 9 A 11 11 0 1 0 22 23 A 8 8 0 1 1 22 9 Z" fill="#C9A84C"/>
                   <path d="M11 21 L21 11 M16 11 H21 V16" stroke="currentColor" className="logo-mark" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <span style={{ fontFamily: 'var(--font-syne)', fontSize: '1.25rem', fontWeight: 700 }}>Trade<span style={{ color: '#C9A84C' }}>Flow</span></span>
+                <span style={{ fontFamily: 'var(--font-syne)', fontSize: '1.25rem', fontWeight: 700 }}>TradeFlow<span style={{ color: '#C9A84C' }}>·</span>Trader</span>
               </Link>
-              <p className="mt-5 text-sm leading-relaxed max-w-sm" style={{ color: 'var(--tf-muted)' }}>Morocco's AI-powered trading platform. Built for master traders who take their edge seriously.</p>
+              <p className="mt-5 text-sm leading-relaxed max-w-sm" style={{ color: 'var(--tf-muted)' }}>Morocco's first social copy-trading platform. Built for the next generation of Moroccan traders.</p>
             </div>
             {[
-              { title:'Product', links:[['How it Works','/'],['Pricing','#pricing'],['AI Strategy Builder','/signup'],['MT5 Setup','/']] },
+              { title:'Product', links:[['How it Works','/'],['Pricing','#pricing'],['Featured Traders','/marketplace'],['MT5 Setup','/']] },
               { title:'Company', links:[['About','/'],['Careers','/'],['Press','/'],['Contact','/']] },
-              { title:'Resources', links:[['Free Courses','/'],['Telegram Community','/'],['Become a Master Trader','/signup'],['Help Center','/']] },
+              { title:'Resources', links:[['Free Courses','/'],['Telegram Community','/'],['Become a Featured Trader','/signup?role=master'],['Help Center','/']] },
             ].map(({ title, links }) => (
               <div key={title} className="md:col-span-2">
                 <div className="text-xs uppercase tracking-widest font-mono" style={{ color: 'var(--tf-subtle)' }}>{title}</div>
