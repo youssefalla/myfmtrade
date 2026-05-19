@@ -3,16 +3,16 @@
 import { useEffect, useState } from 'react'
 
 export function ThemeToggle({ size = 9 }: { size?: number }) {
-  const [dark, setDark] = useState(true)
+  const [dark, setDark] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('tf-theme')
-    if (stored === 'light') {
-      document.documentElement.classList.remove('dark')
-      setDark(false)
-    } else {
+    if (stored === 'dark') {
       document.documentElement.classList.add('dark')
       setDark(true)
+    } else {
+      document.documentElement.classList.remove('dark')
+      setDark(false)
     }
   }, [])
 

@@ -33,12 +33,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} dark`}
+      className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head>
-        {/* Prevents flash on theme switch — runs before React hydration */}
-        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('tf-theme');if(t==='light')document.documentElement.classList.remove('dark');}catch(e){}` }} />
+        {/* Restore saved theme — default is light */}
+        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('tf-theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}` }} />
       </head>
       <body className="antialiased min-h-full flex flex-col">{children}</body>
     </html>
