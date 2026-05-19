@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
 function SignupForm() {
