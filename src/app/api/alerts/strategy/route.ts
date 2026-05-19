@@ -4,7 +4,7 @@ export async function POST(req: NextRequest) {
   try {
     const { masterName, score, confirmation, explanation, userId } = await req.json()
 
-    // Get master's email from Supabase admin
+    // Get master's email via service role
     const { createClient } = await import('@supabase/supabase-js')
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     )
     const { data: { user } } = await supabase.auth.admin.getUserById(userId)
     const email = user?.email
-    if (!email) return NextResponse.json({ ok: true })
+    if (!email) return NextResponse.json({ error: 'No email found for user' }, { status: 400 })
 
     const confirmationColor: Record<string, string> = {
       'STRONG BUY': '#4ADE80',
@@ -22,15 +22,16 @@ export async function POST(req: NextRequest) {
       'STRONG SELL': '#F87171',
     }
     const color = confirmationColor[confirmation] ?? '#C9A84C'
+    const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'onboarding@resend.dev'
 
-    await fetch('https://api.resend.com/emails', {
+    const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'TradeFlow <alerts@tradeflow.app>',
+        from: `TradeFlow <${fromEmail}>`,
         to: email,
         subject: `🎯 Your strategy scored ${score}/10 — ${confirmation}`,
         html: `
@@ -50,9 +51,9 @@ export async function POST(req: NextRequest) {
               <p style="font-size: 14px; color: rgba(240,237,232,.7); line-height: 1.6; margin: 0;">${explanation}</p>
             </div>
 
-            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/master/strategy"
+            <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/master/history"
               style="display: block; background: linear-gradient(135deg,#E0C26A,#C9A84C); color: #1F2329; text-align: center; padding: 14px; border-radius: 999px; font-weight: 700; text-decoration: none; font-size: 14px;">
-              View Full Analysis →
+              View Full Strategy History →
             </a>
 
             <p style="margin-top: 24px; font-size: 12px; color: rgba(240,237,232,.3); text-align: center;">TradeFlow · Strategy Intelligence</p>
@@ -61,9 +62,16 @@ export async function POST(req: NextRequest) {
       }),
     })
 
+    if (!resendRes.ok) {
+      const errBody = await resendRes.json().catch(() => ({}))
+      console.error('Resend error:', resendRes.status, errBody)
+      return NextResponse.json({ error: `Resend error ${resendRes.status}: ${JSON.stringify(errBody)}` }, { status: 502 })
+    }
+
     return NextResponse.json({ ok: true })
   } catch (e) {
-    console.error('Email alert error:', e)
-    return NextResponse.json({ ok: true })
+    const msg = e instanceof Error ? e.message : 'Unknown error'
+    console.error('Email alert error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

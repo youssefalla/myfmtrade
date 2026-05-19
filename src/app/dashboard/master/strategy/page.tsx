@@ -82,6 +82,8 @@ export default function StrategyPage() {
   const [scoreResult, setScoreResult] = useState<ScoreResult | null>(null)
   const [scoring, setScoring] = useState(false)
   const [scoreError, setScoreError] = useState('')
+  const [emailSent, setEmailSent] = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   const aiCount = chatMessages.filter(m => m.role === 'assistant').length
   const currentStep = Math.min(aiCount, 5)
@@ -160,6 +162,8 @@ export default function StrategyPage() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setScoreResult(data)
+      setEmailSent(data.emailSent === true)
+      setEmailError(data.emailError ?? '')
       setView('scored')
     } catch (e) {
       setScoreError(e instanceof Error ? e.message : 'Scoring failed')
@@ -421,14 +425,23 @@ export default function StrategyPage() {
 
                   {/* Email confirmation */}
                   <div className="rounded-xl p-3 flex items-center gap-3"
-                    style={{ background: 'rgba(74,222,128,.06)', border: '1px solid rgba(74,222,128,.15)' }}>
+                    style={{
+                      background: emailSent ? 'rgba(74,222,128,.06)' : 'rgba(248,113,113,.06)',
+                      border: emailSent ? '1px solid rgba(74,222,128,.15)' : '1px solid rgba(248,113,113,.15)',
+                    }}>
                     <div className="w-8 h-8 rounded-full grid place-items-center shrink-0"
-                      style={{ background: 'rgba(74,222,128,.15)' }}>
-                      <span style={{ fontSize: 14 }}>✉️</span>
+                      style={{ background: emailSent ? 'rgba(74,222,128,.15)' : 'rgba(248,113,113,.15)' }}>
+                      <span style={{ fontSize: 14 }}>{emailSent ? '✉️' : '⚠️'}</span>
                     </div>
                     <div>
-                      <div className="text-[11px] font-semibold" style={{ color: '#4ADE80' }}>Score report sent!</div>
-                      <div className="text-[10px]" style={{ color: 'var(--tf-subtle)' }}>Check your email for the full analysis.</div>
+                      <div className="text-[11px] font-semibold" style={{ color: emailSent ? '#4ADE80' : '#F87171' }}>
+                        {emailSent ? 'Score report sent!' : 'Email not sent'}
+                      </div>
+                      <div className="text-[10px]" style={{ color: 'var(--tf-subtle)' }}>
+                        {emailSent
+                          ? 'Check your email for the full analysis.'
+                          : emailError || 'Check RESEND_FROM_EMAIL env var — domain must be verified in Resend.'}
+                      </div>
                     </div>
                   </div>
 

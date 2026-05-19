@@ -71,7 +71,7 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no extr
 
     // Send email alert
     const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
-    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/alerts/strategy`, {
+    const alertRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/alerts/strategy`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -82,8 +82,12 @@ Respond ONLY with a valid JSON object in this exact format (no markdown, no extr
         userId: user.id,
       }),
     })
+    const alertData = await alertRes.json().catch(() => ({}))
+    if (!alertRes.ok) {
+      console.error('Alert email failed:', alertData)
+    }
 
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, emailSent: alertRes.ok, emailError: alertData.error ?? null })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
     return NextResponse.json({ error: msg }, { status: 500 })
