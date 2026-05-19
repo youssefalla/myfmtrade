@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +29,7 @@ Strategy Details:
 
 Give a thorough analysis including ALL mistakes, weaknesses, and areas for improvement — even minor ones. Be honest and specific.
 
-Respond ONLY with a valid JSON object in this exact format:
+Respond ONLY with a valid JSON object in this exact format (no markdown, no extra text):
 {
   "score": <number from 1 to 10>,
   "confirmation": "<one of: STRONG BUY, BUY, NEUTRAL, SELL, STRONG SELL>",
@@ -35,32 +38,20 @@ Respond ONLY with a valid JSON object in this exact format:
   "risks": ["<specific mistake or risk 1>", "<specific mistake or risk 2>", "<specific mistake or risk 3>", "<specific mistake or risk 4>"]
 }`
 
-    const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MOONSHOT_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'moonshot-v1-8k',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-      }),
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: prompt }],
     })
 
-    const aiData = await res.json()
-    const content = aiData.choices?.[0]?.message?.content ?? '{}'
-    const jsonMatch = content.match(/\{[\s\S]*\}/)
+    const raw = response.content[0].type === 'text' ? response.content[0].text : '{}'
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
     const result = JSON.parse(jsonMatch?.[0] ?? '{}')
 
-    // Save current strategy to strategies table
+    // Update strategies table with score
     await supabase.from('strategies').upsert({
       master_id: user.id,
-      pairs,
-      timeframes,
-      style,
-      entry_rules,
-      risk_management,
+      pairs, timeframes, style, entry_rules, risk_management,
       ai_score: result.score,
       ai_explanation: result.explanation,
       ai_confirmation: result.confirmation,
@@ -70,11 +61,7 @@ Respond ONLY with a valid JSON object in this exact format:
     // Save to strategy history
     await supabase.from('strategy_history').insert({
       master_id: user.id,
-      pairs,
-      timeframes,
-      style,
-      entry_rules,
-      risk_management,
+      pairs, timeframes, style, entry_rules, risk_management,
       ai_score: result.score,
       ai_confirmation: result.confirmation,
       ai_explanation: result.explanation,
@@ -82,7 +69,7 @@ Respond ONLY with a valid JSON object in this exact format:
       ai_risks: result.risks ?? [],
     })
 
-    // Send email alert for every score (so master sees all feedback)
+    // Send email alert
     const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
     await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/alerts/strategy`, {
       method: 'POST',
