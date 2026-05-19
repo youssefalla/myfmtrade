@@ -684,6 +684,13 @@ html.dark .logo-mark { color: #F0EDE8; }
   animation: tf-fade-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.ai-bubble p { margin: 0 0 0.35em 0; }
+.ai-bubble p:last-child { margin-bottom: 0; }
+.ai-bubble strong { color: var(--tf-text); font-weight: 600; }
+.ai-bubble ul, .ai-bubble ol { margin: 0.25em 0 0.35em 1em; padding: 0; }
+.ai-bubble li { margin-bottom: 0.2em; }
+.ai-bubble h1, .ai-bubble h2, .ai-bubble h3 { font-size: inherit; font-weight: 600; color: var(--tf-text); margin: 0.4em 0 0.2em; }
+
 /* ---------- Dashboard styles ---------- */
 .dash-sidebar {
   background: var(--tf-sidebar-bg);

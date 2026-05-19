@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MasterSidebar } from '@/components/MasterSidebar'
 import { Send } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import type { Profile } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
@@ -205,7 +206,7 @@ export default function StrategyPage() {
 
             {/* AI Strategy Builder */}
             <div className="col-span-1 rounded-2xl flex flex-col overflow-hidden tf-card-bg"
-              style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)', minHeight: 540 }}>
+              style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)', height: 540 }}>
 
               {/* Header */}
               <div className="px-4 pt-4 pb-3 shrink-0">
@@ -238,21 +239,17 @@ export default function StrategyPage() {
               <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-2 min-h-0">
                 {chatMessages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className="max-w-[90%] rounded-2xl px-3 py-2 text-[11px] leading-relaxed"
-                      style={msg.role === 'user' ? {
-                        background: 'rgba(201,168,76,.15)',
-                        border: '1px solid rgba(201,168,76,.25)',
-                        color: 'var(--tf-text)',
-                        borderBottomRightRadius: 4,
-                      } : {
-                        background: 'var(--tf-card-inner)',
-                        border: '1px solid var(--tf-border)',
-                        color: 'var(--tf-muted)',
-                        borderBottomLeftRadius: 4,
-                        whiteSpace: 'pre-wrap',
-                      }}>
-                      {msg.content}
-                    </div>
+                    {msg.role === 'user' ? (
+                      <div className="max-w-[90%] rounded-2xl px-3 py-2 text-[11px] leading-relaxed"
+                        style={{ background: 'rgba(201,168,76,.15)', border: '1px solid rgba(201,168,76,.25)', color: 'var(--tf-text)', borderBottomRightRadius: 4 }}>
+                        {msg.content}
+                      </div>
+                    ) : (
+                      <div className="max-w-[90%] rounded-2xl px-3 py-2 text-[11px] leading-relaxed ai-bubble"
+                        style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)', color: 'var(--tf-muted)', borderBottomLeftRadius: 4 }}>
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    )}
                   </div>
                 ))}
                 {chatLoading && (
