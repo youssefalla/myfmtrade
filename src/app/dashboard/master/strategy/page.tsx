@@ -17,6 +17,18 @@ interface AIResult {
   risks: string[]
 }
 
+interface HistoryEntry {
+  id: string
+  created_at: string
+  ai_score: number
+  ai_confirmation: string
+  ai_explanation: string
+  ai_strengths: string[]
+  ai_risks: string[]
+  style: string
+  pairs: string[]
+}
+
 function SectionHeading({ title }: { title: string }) {
   return (
     <div className="text-center mb-4">
@@ -87,6 +99,8 @@ export default function StrategyPage() {
   const [aiResult, setAiResult] = useState<AIResult | null>(null)
   const [aiError, setAiError] = useState('')
   const [chartPair, setChartPair] = useState('XAUUSD')
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -95,12 +109,14 @@ export default function StrategyPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/login'; return }
 
-      const [pRes, sRes] = await Promise.all([
+      const [pRes, sRes, hRes] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('strategies').select('*').eq('master_id', user.id).single(),
+        supabase.from('strategy_history').select('*').eq('master_id', user.id).order('created_at', { ascending: false }).limit(20),
       ])
 
       setProfile(pRes.data)
+      setHistory((hRes.data ?? []) as HistoryEntry[])
 
       if (sRes.data) {
         setForm({
@@ -138,6 +154,17 @@ export default function StrategyPage() {
       if (data.error) throw new Error(data.error)
       setAiResult(data)
       setSaved(true)
+      setHistory(prev => [{
+        id: `new-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        ai_score: data.score,
+        ai_confirmation: data.confirmation,
+        ai_explanation: data.explanation,
+        ai_strengths: data.strengths ?? [],
+        ai_risks: data.risks ?? [],
+        style: form.style,
+        pairs: form.pairs,
+      }, ...prev])
     } catch (e) {
       setAiError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
@@ -333,12 +360,84 @@ export default function StrategyPage() {
 
           {/* ROW 5 — Button */}
           {aiError && <p className="text-xs font-mono text-center" style={{ color: '#F87171' }}>{aiError}</p>}
-          {saved && <p className="text-xs font-mono text-center" style={{ color: '#4ADE80' }}>✓ Strategy saved. Email sent if score ≥ 7.</p>}
+          {saved && <p className="text-xs font-mono text-center" style={{ color: '#4ADE80' }}>✓ Strategy scored and saved.</p>}
 
           <button onClick={scoreStrategy} disabled={scoring}
             className="btn-gold rounded-xl py-4 text-sm font-semibold w-full tf-fade-in" style={{ animationDelay: '0.5s' }}>
             {scoring ? 'AI is analyzing your strategy…' : '🤖 Score My Strategy with AI'}
           </button>
+
+          {/* Strategy History */}
+          {history.length > 0 && (
+            <div className="tf-fade-in" style={{ animationDelay: '0.6s' }}>
+              <div className="text-center mb-4">
+                <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--tf-text)' }}>Strategy History</h2>
+                <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 10px rgba(201,168,76,.4)' }} />
+              </div>
+              <div className="space-y-3">
+                {history.map((h) => {
+                  const hColor = h.ai_score >= 8 ? '#4ADE80' : h.ai_score >= 6 ? '#C9A84C' : '#F87171'
+                  const isOpen = expandedId === h.id
+                  return (
+                    <div key={h.id} className="rounded-2xl overflow-hidden tf-card-bg"
+                      style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)' }}>
+                      {/* Row header — always visible */}
+                      <button className="w-full flex items-center gap-4 px-5 py-4 text-left transition-all hover:opacity-90"
+                        onClick={() => setExpandedId(isOpen ? null : h.id)}>
+                        {/* Score badge */}
+                        <div className="w-12 h-12 shrink-0 rounded-xl flex flex-col items-center justify-center"
+                          style={{ background: `${hColor}18`, border: `1px solid ${hColor}40` }}>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 800, color: hColor, lineHeight: 1 }}>{h.ai_score}</span>
+                          <span className="text-[9px]" style={{ color: 'var(--tf-subtle)' }}>/10</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-xs font-semibold" style={{ color: 'var(--tf-text)' }}>{h.style || 'Strategy'}</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full"
+                              style={{ background: `${hColor}15`, color: hColor, border: `1px solid ${hColor}35` }}>
+                              {h.ai_confirmation}
+                            </span>
+                          </div>
+                          <p className="text-[11px] truncate" style={{ color: 'var(--tf-subtle)' }}>
+                            {new Date(h.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            {h.pairs?.length > 0 && ` · ${h.pairs.slice(0,3).join(', ')}`}
+                          </p>
+                        </div>
+                        <span className="text-xs shrink-0" style={{ color: 'var(--tf-subtle)' }}>{isOpen ? '▲' : '▼'}</span>
+                      </button>
+
+                      {/* Expanded detail */}
+                      {isOpen && (
+                        <div className="px-5 pb-5 space-y-3" style={{ borderTop: '1px solid var(--tf-border)' }}>
+                          <p className="text-xs leading-relaxed pt-3" style={{ color: 'var(--tf-muted)' }}>{h.ai_explanation}</p>
+                          {h.ai_strengths?.length > 0 && (
+                            <div className="rounded-xl p-3" style={{ background: 'rgba(74,222,128,.06)', border: '1px solid rgba(74,222,128,.15)' }}>
+                              <div className="text-[9px] font-mono uppercase tracking-widest mb-2" style={{ color: '#4ADE80' }}>Strengths</div>
+                              {h.ai_strengths.map((s, i) => (
+                                <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: 'var(--tf-muted)' }}>
+                                  <span style={{ color: '#4ADE80' }}>✓</span>{s}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {h.ai_risks?.length > 0 && (
+                            <div className="rounded-xl p-3" style={{ background: 'rgba(248,113,113,.06)', border: '1px solid rgba(248,113,113,.15)' }}>
+                              <div className="text-[9px] font-mono uppercase tracking-widest mb-2" style={{ color: '#F87171' }}>Mistakes & Risks</div>
+                              {h.ai_risks.map((r, i) => (
+                                <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: 'var(--tf-muted)' }}>
+                                  <span style={{ color: '#F87171' }}>⚠</span>{r}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
         </div>
       </main>
