@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,32 +32,17 @@ ${strategyCtx}
 
 Be concise, specific, and actionable. For backtests, provide realistic estimated win rates, drawdowns, and RR based on the strategy rules. Never fabricate data — always caveat simulations clearly.`
 
-    const res = await fetch('https://api.moonshot.cn/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MOONSHOT_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'moonshot-v1-8k',
-        messages: [{ role: 'system', content: system }, ...messages],
-        temperature: 0.4,
-        max_tokens: 800,
-      }),
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 800,
+      system,
+      messages: messages.map((m: { role: string; content: string }) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
     })
 
-    const data = await res.json()
-
-    if (!res.ok || data.error) {
-      const errMsg = data.error?.message ?? data.error ?? `HTTP ${res.status}`
-      return NextResponse.json({ error: `Kimi API error: ${errMsg}` }, { status: 502 })
-    }
-
-    const content = data.choices?.[0]?.message?.content
-    if (!content) {
-      return NextResponse.json({ error: `Empty response from Kimi: ${JSON.stringify(data)}` }, { status: 502 })
-    }
-
+    const content = response.content[0].type === 'text' ? response.content[0].text : ''
     return NextResponse.json({ content })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
