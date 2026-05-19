@@ -22,7 +22,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "TradeFlow · Trading Automation & Peace of Mind",
-  description: "Morocco's first social copy-trading platform. Follow verified top traders and automate your portfolio with MT5.",
+  description: "Morocco's AI-powered trading platform. Build your strategy with AI, get scored, and receive live market alerts.",
 };
 
 export default function RootLayout({

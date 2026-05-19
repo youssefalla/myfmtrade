@@ -98,10 +98,10 @@ export default function MasterDashboard() {
             <div>
               <h1 style={{ fontFamily: SYS, fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }}>Master Dashboard</h1>
               <div className="flex items-center gap-1.5 mt-1 text-xs" style={{ color: 'var(--tf-subtle)' }}>
-                <span className="live-dot"></span> Live · {followerCount} follower{followerCount !== 1 ? 's' : ''} copying you
+                <span className="live-dot"></span> Live · {followerCount} follower{followerCount !== 1 ? 's' : ''}
               </div>
             </div>
-            <Link href="/marketplace" className="btn-gold rounded-full px-5 py-2.5 text-sm font-semibold">My Gig Page</Link>
+            <Link href="/dashboard/master/strategy" className="btn-gold rounded-full px-5 py-2.5 text-sm font-semibold">My Strategy</Link>
           </div>
 
           {/* No gig yet — CTA to create one */}

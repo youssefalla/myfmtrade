@@ -2,14 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
 function SignupForm() {
-  const params = useSearchParams()
-  const defaultRole = params.get('role') as 'master' | 'trader' || 'trader'
-  const [role, setRole] = useState<'master' | 'trader'>(defaultRole)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,10 +18,10 @@ function SignupForm() {
     const { error } = await supabase.auth.signUp({
       email: fd.get('email') as string,
       password: fd.get('password') as string,
-      options: { data: { role, full_name: fd.get('name') } },
+      options: { data: { role: 'master', full_name: fd.get('name') } },
     })
     if (error) { setError(error.message); setLoading(false); return }
-    window.location.href = role === 'master' ? '/onboarding/master' : '/onboarding/trader'
+    window.location.href = '/onboarding/master'
   }
 
   return (
@@ -47,26 +43,7 @@ function SignupForm() {
 
         <div className="rounded-2xl p-8 tf-card-gold">
           <h1 style={{ fontFamily: 'var(--font-syne)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)' }}>Create your account</h1>
-          <p className="mt-2 text-sm" style={{ color: 'var(--tf-muted)' }}>Join the top copy-trading platform.</p>
-
-          {/* Role selector */}
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            {(['trader', 'master'] as const).map(r => (
-              <button key={r} type="button" onClick={() => setRole(r)}
-                className="rounded-xl p-4 text-left transition-all"
-                style={{
-                  border: role === r ? '1px solid #C9A84C' : '1px solid var(--tf-border)',
-                  background: role === r ? 'rgba(201,168,76,.1)' : 'var(--tf-card-inner)',
-                }}>
-                <div className="text-sm font-semibold mb-1" style={{ color: 'var(--tf-text)' }}>
-                  {r === 'master' ? 'Master Trader' : 'Copy Trader'}
-                </div>
-                <div className="text-xs" style={{ color: 'var(--tf-subtle)' }}>
-                  {r === 'master' ? 'Share your signals & earn' : 'Follow top traders automatically'}
-                </div>
-              </button>
-            ))}
-          </div>
+          <p className="mt-2 text-sm" style={{ color: 'var(--tf-muted)' }}>Join TradeFlow as a master trader.</p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
@@ -89,7 +66,7 @@ function SignupForm() {
             </div>
             {error && <p className="text-xs font-mono" style={{ color: '#F87171' }}>{error}</p>}
             <button type="submit" disabled={loading} className="btn-gold w-full rounded-xl py-3.5 text-sm font-semibold mt-2">
-              {loading ? 'Creating account…' : `Create ${role === 'master' ? 'Master Trader' : 'Copy Trader'} Account`}
+              {loading ? 'Creating account…' : 'Create Master Trader Account'}
             </button>
           </form>
 
