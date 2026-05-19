@@ -197,43 +197,56 @@ export default function StrategyPage() {
             {/* AI Score */}
             <div className="col-span-1">
               {aiResult ? (
-                <div className="rounded-2xl p-5 tf-card-bg h-full flex flex-col" style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)' }}>
-                  <div className="mb-3">
-                    <SectionHeading title="AI Analysis" />
-                    <div className="flex justify-center -mt-2 mb-2">
-                      <span className="text-[10px] font-mono px-2.5 py-1 rounded-full"
-                        style={{ background: `${confirmationColor[aiResult.confirmation]}18`, color: confirmationColor[aiResult.confirmation], border: `1px solid ${confirmationColor[aiResult.confirmation]}40` }}>
+                <div className="rounded-2xl p-5 h-full flex flex-col"
+                  style={{
+                    background: 'linear-gradient(160deg, #E0C26A 0%, #C9A84C 45%, #B8943E 100%)',
+                    border: '1px solid rgba(255,255,255,.18)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,.25)',
+                  }}>
+
+                  {/* Header */}
+                  <div className="text-center mb-3">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <span className="text-sm font-bold" style={{ color: '#1a1200' }}>AI Analysis</span>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
+                        style={{ background: 'rgba(0,0,0,.18)', color: '#fff' }}>
                         {aiResult.confirmation}
                       </span>
                     </div>
+                    <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(0,0,0,.2) 50%, transparent)' }} />
                   </div>
 
                   {/* Score chart */}
-                  <div className="relative rounded-xl overflow-hidden mb-3" style={{ background: 'linear-gradient(160deg, #0c1829 0%, #080f1c 100%)' }}>
-                    <ScoreChart score={aiResult.score} color={scoreColor} />
+                  <div className="relative rounded-xl overflow-hidden mb-3" style={{ background: 'rgba(0,0,0,.22)' }}>
+                    <ScoreChart score={aiResult.score} color="#fff" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span style={{ fontSize: '2.6rem', fontWeight: 800, color: scoreColor, lineHeight: 1, textShadow: `0 0 24px ${scoreColor}55` }}>{aiResult.score * 10}%</span>
-                      <span className="text-[10px] mt-1 font-mono" style={{ color: 'rgba(255,255,255,.35)' }}>Strategy Score</span>
+                      <span style={{ fontSize: '2.6rem', fontWeight: 800, color: '#fff', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,.3)' }}>{aiResult.score * 10}%</span>
+                      <span className="text-[10px] mt-1 font-mono" style={{ color: 'rgba(255,255,255,.6)' }}>Strategy Score</span>
                     </div>
                   </div>
 
-                  <p className="text-xs leading-relaxed mb-3" style={{ color: 'var(--tf-muted)' }}>{aiResult.explanation}</p>
+                  {/* Explanation */}
+                  <p className="text-xs leading-relaxed mb-3 text-center" style={{ color: 'rgba(0,0,0,.65)' }}>{aiResult.explanation}</p>
+
+                  {/* Strengths */}
                   {aiResult.strengths?.length > 0 && (
-                    <div className="rounded-xl p-3 mb-2" style={{ background: 'rgba(74,222,128,.06)', border: '1px solid rgba(74,222,128,.15)' }}>
-                      <div className="text-[9px] font-mono uppercase tracking-widest mb-2" style={{ color: '#4ADE80' }}>Strengths</div>
+                    <div className="rounded-xl p-3 mb-2" style={{ background: 'rgba(0,0,0,.15)', border: '1px solid rgba(255,255,255,.15)' }}>
+                      <div className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#1a1200' }}>Strengths</div>
                       {aiResult.strengths.slice(0, 2).map((s, i) => (
-                        <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: 'var(--tf-muted)' }}>
+                        <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: '#fff' }}>
                           <span style={{ color: '#4ADE80' }}>✓</span>{s}
                         </div>
                       ))}
                     </div>
                   )}
+
+                  {/* Risks */}
                   {aiResult.risks?.length > 0 && (
-                    <div className="rounded-xl p-3" style={{ background: 'rgba(248,113,113,.06)', border: '1px solid rgba(248,113,113,.15)' }}>
-                      <div className="text-[9px] font-mono uppercase tracking-widest mb-2" style={{ color: '#F87171' }}>Risks</div>
+                    <div className="rounded-xl p-3" style={{ background: 'rgba(0,0,0,.15)', border: '1px solid rgba(255,255,255,.15)' }}>
+                      <div className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color: '#1a1200' }}>Risks</div>
                       {aiResult.risks.slice(0, 2).map((r, i) => (
-                        <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: 'var(--tf-muted)' }}>
-                          <span style={{ color: '#F87171' }}>⚠</span>{r}
+                        <div key={i} className="text-[11px] mb-1 flex gap-1.5" style={{ color: '#fff' }}>
+                          <span style={{ color: '#FECACA' }}>⚠</span>{r}
                         </div>
                       ))}
                     </div>
