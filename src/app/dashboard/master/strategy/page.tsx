@@ -145,23 +145,23 @@ export default function StrategyPage() {
     <div className="h-screen flex overflow-hidden tf-page" style={{ fontFamily: SYS }}>
       <MasterSidebar profile={profile} onAvatarChange={url => setProfile(p => p ? { ...p, avatar_url: url } : p)} />
 
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <main className="flex-1 flex flex-col p-6 md:p-8 overflow-hidden">
+        <div className="w-full max-w-[1600px] mx-auto flex flex-col flex-1 gap-5 min-h-0">
 
           {/* Header */}
-          <div className="text-center tf-fade-in" style={{ animationDelay: '0s' }}>
+          <div className="text-center tf-fade-in shrink-0" style={{ animationDelay: '0s' }}>
             <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--tf-text)', letterSpacing: '-0.03em' }}>Strategy Intelligence</h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--tf-subtle)' }}>AI-guided strategy builder — built with you, step by step.</p>
             <div className="mt-3" style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 12px rgba(201,168,76,.45)' }} />
           </div>
 
-          {/* Chart + Builder */}
-          <div className="grid grid-cols-3 gap-4 tf-fade-in" style={{ animationDelay: '0.1s' }}>
+          {/* Chart + Builder — fills remaining height */}
+          <div className="grid grid-cols-3 gap-4 flex-1 min-h-0 tf-fade-in" style={{ animationDelay: '0.1s' }}>
 
             {/* Chart */}
-            <div className="rounded-2xl overflow-hidden tf-card-bg col-span-2"
+            <div className="rounded-2xl overflow-hidden tf-card-bg col-span-2 flex flex-col"
               style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)' }}>
-              <div className="px-4 pt-4 pb-0">
+              <div className="px-4 pt-4 pb-0 shrink-0">
                 <div className="flex items-center justify-center gap-3 mb-2">
                   <h2 className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>Live Chart</h2>
                   <select value={chartPair} onChange={e => setChartPair(e.target.value)}
@@ -174,13 +174,13 @@ export default function StrategyPage() {
               </div>
               <iframe key={chartPair}
                 src={`https://s.tradingview.com/widgetembed/?frameElementId=tv1&symbol=${chartPair}&interval=H1&theme=dark&style=1&locale=en&hide_top_toolbar=false&hide_legend=false&save_image=false&calendar=false`}
-                style={{ width: '100%', height: 480, border: 'none' }}
+                style={{ width: '100%', flex: 1, border: 'none', minHeight: 0 }}
                 allowTransparency allowFullScreen />
             </div>
 
             {/* AI Strategy Builder */}
             <div className="col-span-1 rounded-2xl flex flex-col overflow-hidden tf-card-bg"
-              style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)', height: 540 }}>
+              style={{ boxShadow: 'inset 0 1px 80px rgba(201,168,76,.05), 0 0 0 1px rgba(201,168,76,.12)' }}>
 
               {/* Header */}
               <div className="px-4 pt-4 pb-3 shrink-0">
@@ -290,7 +290,6 @@ export default function StrategyPage() {
               </div>
             </div>
           </div>
-
 
         </div>
       </main>
