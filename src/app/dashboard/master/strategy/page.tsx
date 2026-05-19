@@ -17,6 +17,16 @@ interface AIResult {
   risks: string[]
 }
 
+interface BacktestResult {
+  equity: number[]
+  trades: number
+  win_rate: number
+  profit_factor: number
+  max_drawdown: number
+  net_pnl: number
+  summary: string
+}
+
 interface HistoryEntry {
   id: string
   created_at: string
@@ -35,6 +45,40 @@ function SectionHeading({ title }: { title: string }) {
       <h2 className="text-sm font-semibold mb-2" style={{ color: 'var(--tf-text)' }}>{title}</h2>
       <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, #C9A84C 50%, transparent)', boxShadow: '0 0 10px rgba(201,168,76,.4)' }} />
     </div>
+  )
+}
+
+function BacktestChart({ equity, color }: { equity: number[]; color: string }) {
+  const W = 480, H = 120, PAD = 14
+  const min = Math.min(...equity)
+  const max = Math.max(...equity)
+  const range = max - min || 1
+  const pts = equity.map((v, i) => ({
+    x: PAD + (i / (equity.length - 1)) * (W - PAD * 2),
+    y: H - PAD - ((v - min) / range) * (H - PAD * 2),
+  }))
+  let line = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i]
+    const cx = (a.x + b.x) / 2
+    line += ` C ${cx} ${a.y} ${cx} ${b.y} ${b.x} ${b.y}`
+  }
+  const fill = line + ` L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`
+  const uid = `bt${equity.length}`
+  return (
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <path d={fill} fill={`url(#${uid})`} />
+      <path d={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {[0, 7, 14, 21, 29].map(i => pts[i] && (
+        <circle key={i} cx={pts[i].x} cy={pts[i].y} r="2.8" fill={color} stroke="rgba(0,0,0,.4)" strokeWidth="1.2" />
+      ))}
+    </svg>
   )
 }
 
@@ -101,6 +145,9 @@ export default function StrategyPage() {
   const [chartPair, setChartPair] = useState('XAUUSD')
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [backtest, setBacktest] = useState<BacktestResult | null>(null)
+  const [backtesting, setBacktesting] = useState(false)
+  const [backtestError, setBacktestError] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -169,6 +216,25 @@ export default function StrategyPage() {
       setAiError(e instanceof Error ? e.message : 'Something went wrong')
     } finally {
       setScoring(false)
+    }
+  }
+
+  async function runBacktest() {
+    if (!form.entry_rules) { setBacktestError('Please fill in your entry rules first.'); return }
+    setBacktesting(true); setBacktestError('')
+    try {
+      const res = await fetch('/api/ai/backtest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      setBacktest(data)
+    } catch (e) {
+      setBacktestError(e instanceof Error ? e.message : 'Something went wrong')
+    } finally {
+      setBacktesting(false)
     }
   }
 
@@ -247,7 +313,7 @@ export default function StrategyPage() {
                   <div className="relative rounded-xl overflow-hidden mb-3" style={{ background: 'rgba(0,0,0,.22)' }}>
                     <ScoreChart score={aiResult.score} color="#fff" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span style={{ fontSize: '2.6rem', fontWeight: 800, color: '#fff', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,.3)' }}>{aiResult.score * 10}%</span>
+                      <span style={{ fontSize: '2.6rem', fontWeight: 800, color: '#fff', lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,.3)' }}>{Math.round(Number(aiResult.score) * 10)}%</span>
                       <span className="text-[10px] mt-1 font-mono" style={{ color: 'rgba(255,255,255,.6)' }}>Strategy Score</span>
                     </div>
                   </div>
@@ -358,14 +424,95 @@ export default function StrategyPage() {
             </div>
           </div>
 
-          {/* ROW 5 — Button */}
+          {/* ROW 5 — Buttons */}
           {aiError && <p className="text-xs font-mono text-center" style={{ color: '#F87171' }}>{aiError}</p>}
           {saved && <p className="text-xs font-mono text-center" style={{ color: '#4ADE80' }}>✓ Strategy scored and saved.</p>}
 
-          <button onClick={scoreStrategy} disabled={scoring}
-            className="btn-gold rounded-xl py-4 text-sm font-semibold w-full tf-fade-in" style={{ animationDelay: '0.5s' }}>
-            {scoring ? 'AI is analyzing your strategy…' : '🤖 Score My Strategy with AI'}
-          </button>
+          <div className="grid grid-cols-2 gap-3 tf-fade-in" style={{ animationDelay: '0.5s' }}>
+            <button onClick={scoreStrategy} disabled={scoring}
+              className="btn-gold rounded-xl py-4 text-sm font-semibold w-full">
+              {scoring ? 'AI is analyzing…' : '🤖 Score My Strategy'}
+            </button>
+            <button onClick={runBacktest} disabled={backtesting}
+              className="rounded-xl py-4 text-sm font-semibold w-full transition-all"
+              style={{
+                background: backtesting ? 'var(--tf-card-inner)' : 'rgba(74,222,128,.1)',
+                border: '1px solid rgba(74,222,128,.3)',
+                color: backtesting ? 'var(--tf-muted)' : '#4ADE80',
+              }}>
+              {backtesting ? 'Running backtest…' : '📊 Run AI Backtest (1M)'}
+            </button>
+          </div>
+
+          {/* Backtest Results */}
+          {backtestError && <p className="text-xs font-mono text-center" style={{ color: '#F87171' }}>{backtestError}</p>}
+          {backtest && (
+            <div className="rounded-2xl overflow-hidden tf-card-bg tf-fade-in" style={{ animationDelay: '0s', boxShadow: 'inset 0 1px 80px rgba(74,222,128,.04), 0 0 0 1px rgba(74,222,128,.18)' }}>
+              {/* Header */}
+              <div className="px-5 pt-5 pb-0">
+                <div className="text-center mb-3">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <h2 className="text-sm font-semibold" style={{ color: 'var(--tf-text)' }}>AI Backtest — Last 30 Days</h2>
+                    <span className="text-[10px] font-mono px-2.5 py-1 rounded-full font-bold"
+                      style={{
+                        background: backtest.net_pnl >= 0 ? 'rgba(74,222,128,.12)' : 'rgba(248,113,113,.12)',
+                        color: backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171',
+                        border: `1px solid ${backtest.net_pnl >= 0 ? 'rgba(74,222,128,.25)' : 'rgba(248,113,113,.25)'}`,
+                      }}>
+                      {backtest.net_pnl >= 0 ? '+' : ''}{backtest.net_pnl.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div style={{ height: 1, background: `linear-gradient(90deg, transparent, ${backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171'} 50%, transparent)`, opacity: 0.4 }} />
+                </div>
+              </div>
+
+              {/* Equity Chart */}
+              {backtest.equity?.length > 1 && (
+                <div className="px-4 py-2">
+                  <div className="relative rounded-xl overflow-hidden" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
+                    <div className="absolute top-2 left-3 text-[10px] font-mono" style={{ color: 'var(--tf-subtle)' }}>
+                      ${backtest.equity[0]?.toLocaleString()}
+                    </div>
+                    <div className="absolute top-2 right-3 text-[10px] font-mono font-bold"
+                      style={{ color: backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171' }}>
+                      ${backtest.equity[backtest.equity.length - 1]?.toLocaleString()}
+                    </div>
+                    <div className="pt-6 pb-1">
+                      <BacktestChart equity={backtest.equity} color={backtest.net_pnl >= 0 ? '#4ADE80' : '#F87171'} />
+                    </div>
+                    <div className="flex justify-between px-3 pb-2">
+                      {['Day 1', 'Week 1', 'Week 2', 'Week 3', 'Day 30'].map(l => (
+                        <span key={l} className="text-[9px] font-mono" style={{ color: 'var(--tf-subtle)' }}>{l}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Stats Grid */}
+              <div className="px-5 pb-4 pt-2">
+                <div className="grid grid-cols-4 gap-3 mb-3">
+                  {[
+                    { label: 'Total Trades', value: String(backtest.trades) },
+                    { label: 'Win Rate', value: `${backtest.win_rate?.toFixed(1)}%` },
+                    { label: 'Profit Factor', value: backtest.profit_factor?.toFixed(2), good: backtest.profit_factor >= 1 },
+                    { label: 'Max Drawdown', value: `-${backtest.max_drawdown?.toFixed(1)}%`, bad: true },
+                  ].map(({ label, value, good, bad }) => (
+                    <div key={label} className="rounded-xl p-3 text-center" style={{ background: 'var(--tf-card-inner)', border: '1px solid var(--tf-border)' }}>
+                      <div className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: 'var(--tf-subtle)' }}>{label}</div>
+                      <div className="text-sm font-bold"
+                        style={{ color: bad ? '#F87171' : good ? '#4ADE80' : 'var(--tf-text)' }}>
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {backtest.summary && (
+                  <p className="text-xs leading-relaxed text-center" style={{ color: 'var(--tf-muted)' }}>{backtest.summary}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Strategy History */}
           {history.length > 0 && (
