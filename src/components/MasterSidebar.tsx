@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { TrendingUp, Settings, Camera, Brain, Monitor, Video, BarChart2, MessageCircle } from 'lucide-react'
+import { TrendingUp, Settings, Camera, Brain, Monitor, Video, BarChart2, MessageCircle, ClockArrowUp } from 'lucide-react'
 import type { Profile } from '@/types/database'
 
 const SYS = '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif'
@@ -44,13 +44,14 @@ function playPop() {
 }
 
 const navItems = [
-  { icon: Monitor,       label: 'MT Dashboard', href: '/dashboard/master/mt' },
-  { icon: BarChart2,     label: 'Live Chart',   href: '/dashboard/master/chart' },
-  { icon: Brain,         label: 'Strategy',     href: '/dashboard/master/strategy' },
-  { icon: Video,         label: 'Live',         href: '/dashboard/master/live' },
-  { icon: MessageCircle, label: 'Community',    href: COMMUNITY_HREF },
-  { icon: TrendingUp,    label: 'My Trades',    href: '/dashboard/master/trades' },
-  { icon: Settings,      label: 'Settings',     href: '/dashboard/master/settings' },
+  { icon: Monitor,        label: 'MT Dashboard',      href: '/dashboard/master/mt' },
+  { icon: BarChart2,      label: 'Live Chart',        href: '/dashboard/master/chart' },
+  { icon: Brain,          label: 'Strategy',          href: '/dashboard/master/strategy' },
+  { icon: ClockArrowUp,   label: 'Strategy History',  href: '/dashboard/master/history' },
+  { icon: Video,          label: 'Live',              href: '/dashboard/master/live' },
+  { icon: MessageCircle,  label: 'Community',         href: COMMUNITY_HREF },
+  { icon: TrendingUp,     label: 'My Trades',         href: '/dashboard/master/trades' },
+  { icon: Settings,       label: 'Settings',          href: '/dashboard/master/settings' },
 ]
 
 interface Props {
