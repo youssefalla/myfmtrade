@@ -120,10 +120,18 @@ export default function StrategyPage() {
     setChatLoading(true)
 
     try {
+      // Extract pairs selected so far from conversation
+      const mentionedPairs = selectedChips.length > 0 ? selectedChips : []
+
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updated, mode: 'builder' }),
+        body: JSON.stringify({
+          messages: updated,
+          mode: 'builder',
+          chartPair,
+          pairs: mentionedPairs,
+        }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
