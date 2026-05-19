@@ -45,13 +45,6 @@ const STEP_CHIPS: Record<number, string[]> = {
 
 const STEP_LABELS = ['Trading Pairs', 'Timeframes', 'Trading Style', 'Entry Rules', 'Risk Management']
 
-const CONFIRMATION_COLOR: Record<string, string> = {
-  'STRONG BUY': '#4ADE80',
-  'BUY': '#86EFAC',
-  'NEUTRAL': '#C9A84C',
-  'SELL': '#FCA5A5',
-  'STRONG SELL': '#F87171',
-}
 
 function extractStrategy(content: string): StrategyData | null {
   const m = content.match(/<STRATEGY_DATA>([\s\S]*?)<\/STRATEGY_DATA>/)
@@ -398,10 +391,6 @@ export default function StrategyPage() {
                     style={{ background: `${scoreColor}10`, border: `1px solid ${scoreColor}30` }}>
                     <div style={{ fontSize: '3.5rem', fontWeight: 800, color: scoreColor, lineHeight: 1 }}>{scoreResult.score}</div>
                     <div className="text-xs font-mono mt-0.5" style={{ color: 'var(--tf-subtle)' }}>out of 10</div>
-                    <div className="mt-3 inline-flex px-3 py-1 rounded-full text-xs font-bold"
-                      style={{ background: `${CONFIRMATION_COLOR[scoreResult.confirmation] ?? '#C9A84C'}18`, color: CONFIRMATION_COLOR[scoreResult.confirmation] ?? '#C9A84C', border: `1px solid ${CONFIRMATION_COLOR[scoreResult.confirmation] ?? '#C9A84C'}35` }}>
-                      {scoreResult.confirmation}
-                    </div>
                   </div>
 
                   {/* Explanation */}
